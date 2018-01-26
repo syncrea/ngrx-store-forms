@@ -1,0 +1,12 @@
+<form [formGroup]="formGroup"
+      rxsfBinding="testForm.feature1.state.form1"
+      novalidate>
+<input formControlName="ctrl1"
+       title="Test input"
+       type="text">
+  <ng-container *ngIf="formState.dirty">
+    <div style="color: red" *ngFor="let error of formState.errors?.ctrl1">
+      {{error}}
+    </div>
+  </ng-container>
+</form>
