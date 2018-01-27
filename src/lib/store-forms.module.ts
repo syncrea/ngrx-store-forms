@@ -1,14 +1,14 @@
-import {Inject, ModuleWithProviders, NgModule} from '@angular/core';
+import {ModuleWithProviders, NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {BindingDirective} from './binding.directive';
-import {META_REDUCERS, MetaReducer, Store} from '@ngrx/store';
+import {Store} from '@ngrx/store';
 import {BindingService} from './binding.service';
 import {StoreFormsConfig} from './model';
 import {STORE_FORMS_CONFIG} from './tokens';
 
 export const defaultStoreFormsConfig: StoreFormsConfig = {
-  debounce: 300
+  bindingStrategy: 'ObserveStore'
 };
 
 @NgModule({

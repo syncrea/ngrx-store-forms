@@ -120,13 +120,13 @@
     "directive-selector": [
       true,
       "attribute",
-      "rxf",
+      "rxsf",
       "camelCase"
     ],
     "component-selector": [
       true,
       "element",
-      "rxf",
+      "rxsf",
       "kebab-case"
     ],
     "no-output-on-prefix": true,

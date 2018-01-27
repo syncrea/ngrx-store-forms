@@ -1,15 +1,17 @@
 import {FormGroup} from '@angular/forms';
 import {Store} from '@ngrx/store';
-import {debounceTime, filter, map, startWith, tap} from 'rxjs/operators';
-import {UpdateFormStateAction} from './reducer';
+import {filter, map, startWith} from 'rxjs/operators';
 import {Inject, Injectable, Optional} from '@angular/core';
-import {noStoreError} from './errors';
+import {noStoreError, noStoreFormBinding} from './errors';
 import {STORE_FORMS_CONFIG} from './tokens';
-import {ErrorMessages, FormGroupConnection, FormGroupState, StoreFormsConfig} from './model';
+import {ErrorMessages, FormGroupState, StoreFormBinding, StoreFormsBindingStrategy, StoreFormsConfig} from './model';
 import {deepEquals, deepGet} from './helper';
+import {UpdateStoreFormStateAction} from './reducer';
 
 @Injectable()
 export class BindingService {
+  private bindings: {[k: string]: StoreFormBinding} = {};
+
   constructor(@Inject(STORE_FORMS_CONFIG) private config: StoreFormsConfig,
               @Optional() private store: Store<any>) {
     if (!this.store) {
@@ -17,62 +19,51 @@ export class BindingService {
     }
   }
 
-  bind(path: string, formGroup: FormGroup): FormGroupConnection {
+  bind(path: string, formGroup: FormGroup) {
     const formGroupSubscription = formGroup.statusChanges
       .pipe(
-        tap((e) =>
-          this.store.dispatch(new UpdateFormStateAction({
-            path: path,
-            state: {
-              updating: true
-            }
-          }))
-        ),
-        debounceTime(this.config.debounce),
         startWith(true)
       )
       .subscribe(() => {
-        this.store.dispatch(new UpdateFormStateAction({
-          path: path,
-          state: {
-            updating: false,
-            value: {
-              ...formGroup.getRawValue()
-            },
-            dirty: formGroup.dirty,
-            valid: formGroup.valid,
-            errors: this.getErrors(path, formGroup)
-          }
+        this.store.dispatch(new UpdateStoreFormStateAction(path, {
+          value: {
+            ...formGroup.getRawValue()
+          },
+          untouched: formGroup.untouched,
+          touched: formGroup.touched,
+          pristine: formGroup.pristine,
+          dirty: formGroup.dirty,
+          valid: formGroup.valid,
+          invalid: formGroup.invalid,
+          pending: formGroup.pending,
+          errors: this.getErrors(path, formGroup)
         }));
       });
 
-    const storeSubscription = this.store
-      .pipe(
-        map((state) => deepGet(state, path)),
-        filter((formState: FormGroupState) => {
-          return formState &&
-            !formState.updating &&
-            formState.value &&
-            Object.keys(formState.value).length !== 0 &&
-            !deepEquals(formState.value, formGroup.getRawValue());
-        })
-      )
-      .subscribe((formState: FormGroupState) => {
-        // If we're updating the form values because of state changes
-        // we should not trigger any value change update but need to make
-        // sure we trigger any status changes / validator changes
-        formGroup.setValue(formState.value, {
-          emitEvent: false
-        });
-        formGroup.markAsDirty();
-        formGroup.setErrors(null);
-      });
-
-    return {
+    this.bindings[path] = {
+      path,
       formGroup,
-      formGroupSubscription,
-      storeSubscription
+      formGroupSubscription
     };
+
+    if (this.config.bindingStrategy === 'ObserveStore') {
+      this.bindings[path].storeSubscription = this.store
+        .pipe(
+          map((state) => deepGet(state, path)),
+          filter((formState: FormGroupState) => {
+            // Very simple dirty checking by comparing current values in
+            // state to values in form group using deep equal to prevent
+            // infinite loop setValue -> store -> setValue -> store ...
+            return formState &&
+              formState.value &&
+              Object.keys(formState.value).length !== 0 &&
+              !deepEquals(formState.value, formGroup.getRawValue());
+          })
+        )
+        .subscribe((formState: FormGroupState) => {
+          formGroup.setValue(formState.value);
+        });
+    }
   }
 
   private getErrors(path: string, formGroup: FormGroup) {
@@ -101,8 +92,20 @@ export class BindingService {
     }, {});
   }
 
-  unbind(formGroupConnection: FormGroupConnection) {
-    formGroupConnection.formGroupSubscription.unsubscribe();
-    formGroupConnection.storeSubscription.unsubscribe();
+  unbind(path: string) {
+    this.bindings[path].formGroupSubscription.unsubscribe();
+    if (this.bindings[path].storeSubscription) {
+      this.bindings[path].storeSubscription.unsubscribe();
+    }
+    delete this.bindings[path];
+  }
+
+  updateFormGroup(path: string, value: {[k: string]: string}) {
+    if (!this.bindings[path]) {
+      noStoreFormBinding(path);
+    }
+
+    const binding = this.bindings[path];
+    binding.formGroup.patchValue(value);
   }
 }

@@ -1,30 +1,32 @@
 import {FormGroup} from '@angular/forms';
 import {Subscription} from 'rxjs/Subscription';
 
-export interface FormGroupConnection {
+export interface StoreFormBinding {
+  path: string;
   formGroup: FormGroup;
   formGroupSubscription: Subscription;
-  storeSubscription: Subscription;
+  storeSubscription?: Subscription | undefined;
 }
 
 export interface ErrorMessages {
   [k: string]: ErrorMessages | string;
 }
 
+export type StoreFormsBindingStrategy = 'ObserveStore' | 'OnlyUpdateStoreFormAction';
+
 export interface StoreFormsConfig {
-  debounce?: number;
+  bindingStrategy?: StoreFormsBindingStrategy;
   errorMessages?: ErrorMessages;
 }
 
 export interface FormGroupState {
-  value?: any;
+  value?: {[k: string]: string};
   errors?: any;
-  valid?: boolean;
+  untouched?: boolean;
+  touched?: boolean;
+  pristine?: boolean;
   dirty?: boolean;
-  updating?: boolean;
-}
-
-export interface FormStateUpdate {
-  path: string;
-  state: FormGroupState;
+  valid?: boolean;
+  invalid?: boolean;
+  pending?: boolean;
 }
