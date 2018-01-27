@@ -4,7 +4,7 @@ import {filter, map, startWith} from 'rxjs/operators';
 import {Inject, Injectable, Optional} from '@angular/core';
 import {noStoreError, noStoreFormBinding} from './errors';
 import {STORE_FORMS_CONFIG} from './tokens';
-import {ErrorMessages, FormGroupState, StoreFormBinding, StoreFormsBindingStrategy, StoreFormsConfig} from './model';
+import {ErrorMessages, FormGroupState, StoreFormBinding, StoreFormsConfig} from './model';
 import {deepEquals, deepGet} from './helper';
 import {UpdateStoreFormStateAction} from './reducer';
 
