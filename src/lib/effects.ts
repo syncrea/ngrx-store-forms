@@ -5,13 +5,14 @@ import {StoreFormsNoopAction, UpdateStoreFormAction, UpdateStoreFormStateAction}
 import {filter, map, switchMap, take} from 'rxjs/operators';
 import {BindingService} from './binding.service';
 import {STORE_FORMS_CONFIG} from './tokens';
-import {FormGroupState, StoreFormsBindingStrategy, StoreFormsConfig} from './model';
+import {FormGroupState, StoreFormsConfig} from './model';
 import {deepGet} from './helper';
 import {of} from 'rxjs/observable/of';
+import {Observable} from 'rxjs/Observable';
 
 @Injectable()
 export class StoreFormsEffects {
-  @Effect() reflectToFormStateEffect = this.actions
+  @Effect() reflectToFormStateEffect: Observable<Action> = this.actions
     .pipe(
       filter((action: Action) => action instanceof UpdateStoreFormAction),
       switchMap((action: UpdateStoreFormAction) => {

@@ -4,12 +4,6 @@ export function noStoreError() {
   );
 }
 
-export function noEffectsError() {
-  throw new Error(
-    `No store effects detected. Make sure you've included @ngrx/effects in your application.`
-  );
-}
-
 export function noFormGroupError() {
   throw new Error(
     `rxfConnectForm needs to be placed on an element which also contains a formGroup directive.`
