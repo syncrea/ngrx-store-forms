@@ -63,7 +63,14 @@ export class BindingService {
         })
         )
         .subscribe((formState: FormGroupState) => {
-          formGroup.setValue(formState.value);
+          switch (this.config.formUpdateStrategy) {
+            case 'SetValue':
+              formGroup.setValue(formState.value);
+              return;
+            case 'PatchValue':
+              formGroup.patchValue(formState.value);
+              return;
+          }
         });
     }
   }

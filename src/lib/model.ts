@@ -13,11 +13,13 @@ export interface ErrorMessages {
 }
 
 export type StoreFormsBindingStrategy = 'ObserveStore' | 'OnlyUpdateStoreFormAction';
+export type StoreFormsFormUpdateStartegy = 'SetValue' | 'PatchValue';
 
 export interface StoreFormsConfig {
   bindingStrategy?: StoreFormsBindingStrategy;
   errorMessages?: ErrorMessages;
   feature?: string;
+  formUpdateStrategy?: StoreFormsFormUpdateStartegy;
 }
 
 export interface FormGroupState {
