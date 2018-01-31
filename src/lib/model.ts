@@ -1,5 +1,5 @@
-import {FormGroup} from '@angular/forms';
-import {Subscription} from 'rxjs/Subscription';
+import { FormGroup } from '@angular/forms';
+import { Subscription } from 'rxjs/Subscription';
 
 export interface StoreFormBinding {
   path: string;
@@ -13,14 +13,17 @@ export interface ErrorMessages {
 }
 
 export type StoreFormsBindingStrategy = 'ObserveStore' | 'OnlyUpdateStoreFormAction';
+export type StoreFormsFormUpdateStartegy = 'SetValue' | 'PatchValue';
 
 export interface StoreFormsConfig {
   bindingStrategy?: StoreFormsBindingStrategy;
   errorMessages?: ErrorMessages;
+  feature?: string;
+  formUpdateStrategy?: StoreFormsFormUpdateStartegy;
 }
 
 export interface FormGroupState {
-  value?: {[k: string]: string};
+  value?: { [k: string]: string };
   errors?: any;
   untouched?: boolean;
   touched?: boolean;
