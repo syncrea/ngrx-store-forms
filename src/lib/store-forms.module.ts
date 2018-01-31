@@ -38,7 +38,10 @@ export class StoreFormsModule {
       config = <StoreFormsConfig>{
         feature: feature
       };
+    } else {
+      config = Object.assign(config, { feature: feature });
     }
+
     return this.configure(config);
   }
   static configure(config?: StoreFormsConfig): ModuleWithProviders {
