@@ -63,7 +63,7 @@ export class BindingService {
         })
         )
         .subscribe((formState: FormGroupState) => {
-          formGroup.patchValue(formState.value);
+          formGroup.setValue(formState.value);
         });
     }
   }
