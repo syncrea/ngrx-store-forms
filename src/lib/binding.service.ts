@@ -1,19 +1,19 @@
-import {FormGroup} from '@angular/forms';
-import {Store} from '@ngrx/store';
-import {filter, map, startWith} from 'rxjs/operators';
-import {Inject, Injectable, Optional} from '@angular/core';
-import {noStoreError, noStoreFormBinding} from './errors';
-import {STORE_FORMS_CONFIG} from './tokens';
-import {ErrorMessages, FormGroupState, StoreFormBinding, StoreFormsConfig} from './model';
-import {deepEquals, deepGet} from './helper';
-import {UpdateStoreFormStateAction} from './reducer';
+import { FormGroup } from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { filter, map, startWith, skip } from 'rxjs/operators';
+import { Inject, Injectable, Optional } from '@angular/core';
+import { noStoreError, noStoreFormBinding } from './errors';
+import { STORE_FORMS_CONFIG } from './tokens';
+import { ErrorMessages, FormGroupState, StoreFormBinding, StoreFormsBindingStrategy, StoreFormsConfig } from './model';
+import { deepEquals, deepGet } from './helper';
+import { UpdateStoreFormStateAction } from './reducer';
 
 @Injectable()
 export class BindingService {
-  private bindings: {[k: string]: StoreFormBinding} = {};
+  private bindings: { [k: string]: StoreFormBinding } = {};
 
-  constructor(@Inject(STORE_FORMS_CONFIG) private config: StoreFormsConfig,
-              @Optional() private store: Store<any>) {
+  constructor( @Inject(STORE_FORMS_CONFIG) private config: StoreFormsConfig,
+    @Optional() private store: Store<any>) {
     if (!this.store) {
       noStoreError();
     }
@@ -22,43 +22,45 @@ export class BindingService {
   bind(path: string, formGroup: FormGroup) {
     const formGroupSubscription = formGroup.statusChanges
       .pipe(
-        startWith(true)
+      startWith(true)
       )
       .subscribe(() => {
-        this.store.dispatch(new UpdateStoreFormStateAction(path, {
-          value: {
-            ...formGroup.getRawValue()
-          },
-          untouched: formGroup.untouched,
-          touched: formGroup.touched,
-          pristine: formGroup.pristine,
-          dirty: formGroup.dirty,
-          valid: formGroup.valid,
-          invalid: formGroup.invalid,
-          pending: formGroup.pending,
-          errors: this.getErrors(path, formGroup)
-        }));
+        this
+          .store
+          .dispatch(new UpdateStoreFormStateAction(path, {
+            value: {
+              ...formGroup.getRawValue()
+            },
+            untouched: formGroup.untouched,
+            touched: formGroup.touched,
+            pristine: formGroup.pristine,
+            dirty: formGroup.dirty,
+            valid: formGroup.valid,
+            invalid: formGroup.invalid,
+            pending: formGroup.pending,
+            errors: this.getErrors(path, formGroup)
+          }));
       });
 
-    this.bindings[path] = {
+    this.bindings[this.prepareFeaturePathIfNeeded(path)] = {
       path,
       formGroup,
       formGroupSubscription
     };
 
     if (this.config.bindingStrategy === 'ObserveStore') {
-      this.bindings[path].storeSubscription = this.store
+      this.bindings[this.prepareFeaturePathIfNeeded(path)].storeSubscription = this.store
         .pipe(
-          map((state) => deepGet(state, path)),
-          filter((formState: FormGroupState) => {
-            // Very simple dirty checking by comparing current values in
-            // state to values in form group using deep equal to prevent
-            // infinite loop setValue -> store -> setValue -> store ...
-            return formState &&
-              formState.value &&
-              Object.keys(formState.value).length !== 0 &&
-              !deepEquals(formState.value, formGroup.getRawValue());
-          })
+        map((state) => deepGet(state, this.prepareFeaturePathIfNeeded(path))),
+        filter((formState: FormGroupState) => {
+          // Very simple dirty checking by comparing current values in
+          // state to values in form group using deep equal to prevent
+          // infinite loop setValue -> store -> setValue -> store ...
+          return formState &&
+            formState.value &&
+            Object.keys(formState.value).length !== 0 &&
+            !deepEquals(formState.value, formGroup.getRawValue());
+        })
         )
         .subscribe((formState: FormGroupState) => {
           formGroup.setValue(formState.value);
@@ -93,19 +95,27 @@ export class BindingService {
   }
 
   unbind(path: string) {
-    this.bindings[path].formGroupSubscription.unsubscribe();
-    if (this.bindings[path].storeSubscription) {
-      this.bindings[path].storeSubscription.unsubscribe();
+    this.bindings[this.prepareFeaturePathIfNeeded(path)].formGroupSubscription.unsubscribe();
+    if (this.bindings[this.prepareFeaturePathIfNeeded(path)].storeSubscription) {
+      this.bindings[this.prepareFeaturePathIfNeeded(path)].storeSubscription.unsubscribe();
     }
-    delete this.bindings[path];
+    delete this.bindings[this.prepareFeaturePathIfNeeded(path)];
   }
 
-  updateFormGroup(path: string, value: {[k: string]: string}) {
-    if (!this.bindings[path]) {
-      noStoreFormBinding(path);
+  updateFormGroup(path: string, value: { [k: string]: string }) {
+    if (!this.bindings[this.prepareFeaturePathIfNeeded(path)]) {
+      noStoreFormBinding(this.prepareFeaturePathIfNeeded(path));
     }
 
-    const binding = this.bindings[path];
+    const binding = this.bindings[this.prepareFeaturePathIfNeeded(path)];
     binding.formGroup.patchValue(value);
+  }
+
+  private prepareFeaturePathIfNeeded(path: string): string {
+    if (!!this.config.feature) {
+      return `${this.config.feature}.${path}`;
+    }
+
+    return path;
   }
 }
