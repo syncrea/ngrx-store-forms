@@ -12,3 +12,4 @@ WIP / Open tasks
 1. Documentation
 2. Tests
 3. Adapter interface for custom form components (like ng material)
+4. Separate example app from library project
