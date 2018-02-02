@@ -1,18 +1,19 @@
-import {BrowserModule} from '@angular/platform-browser';
-import {NgModule} from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
 
-import {AppComponent} from './app.component';
-import {StoreFormsModule} from '../lib/store-forms.module';
-import {ReactiveFormsModule} from '@angular/forms';
-import {Action, StoreModule} from '@ngrx/store';
-import {StoreDevtoolsModule} from '@ngrx/store-devtools';
-import {storeFormsMetaReducer} from '../lib/reducer';
-import {Form1ContainerComponent} from './container/form1-container.component';
-import {Form1Component} from './components/form1.component';
-import {EffectsModule} from '@ngrx/effects';
-import {StoreFormsEffects} from '../lib/effects';
+import { AppComponent } from './app.component';
+import { StoreFormsModule } from '../lib/store-forms.module';
+import { ReactiveFormsModule } from '@angular/forms';
+import { Action, StoreModule } from '@ngrx/store';
+import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { storeFormsMetaReducer } from '../lib/reducer';
+import { Form1ContainerComponent } from './container/form1-container.component';
+import { Form1Component } from './components/form1.component';
+import { EffectsModule } from '@ngrx/effects';
+import { StoreFormsEffects } from '../lib/effects';
+import { FormArrayComponent } from './components/form-array.component';
 
-export function testFormReducer(state: any = {form1: {}}, action: Action) {
+export function testFormReducer(state: any = { form1: {}, form2: { value: { items: [] } } }, action: Action) {
   switch (action.type) {
     case 'CustomUpdateAction': {
       return {
@@ -22,6 +23,17 @@ export function testFormReducer(state: any = {form1: {}}, action: Action) {
           value: {
             ...state.form1.value,
             name: 'Custom reset'
+          }
+        }
+      };
+    }
+    case 'AddFormArrayItemAction': {
+      return {
+        ...state,
+        form2: {
+          ...state.form2,
+          value: {
+            items: !!!state.form2.value.items ? [{}] : [...state.form2.value.items, {}]
           }
         }
       };
@@ -36,7 +48,8 @@ export function testFormReducer(state: any = {form1: {}}, action: Action) {
   declarations: [
     AppComponent,
     Form1ContainerComponent,
-    Form1Component
+    Form1Component,
+    FormArrayComponent
   ],
   imports: [
     BrowserModule,
@@ -44,8 +57,8 @@ export function testFormReducer(state: any = {form1: {}}, action: Action) {
     StoreModule.forRoot({
       testForm: testFormReducer
     }, {
-      metaReducers: [storeFormsMetaReducer]
-    }),
+        metaReducers: [storeFormsMetaReducer]
+      }),
     StoreDevtoolsModule.instrument(),
     EffectsModule.forRoot([
       StoreFormsEffects

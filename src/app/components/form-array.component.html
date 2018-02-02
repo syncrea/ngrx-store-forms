@@ -1,0 +1,10 @@
+<form [formGroup]="formGroup" rxsfBinding="testForm.form2">
+  <!-- <ng-container formArrayName="items">
+    <ul *ngFor="let item of formGroup.get('items').controls; let i = index">
+      <ng-container [formGroupName]="i">
+        <li><input type="text" formControlName="name"></li>
+      </ng-container>
+    </ul>
+  </ng-container> -->
+</form>
+<button type="button" (click)="addFormArrayItem.emit()">Add item to array</button>
