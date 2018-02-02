@@ -47,7 +47,7 @@ export class Form1ContainerComponent {
     //     const items = <any>result.value.items;
     //     const controls = !!!items ? [] : items.map(item => {
     //       return this.fb.group({
-    //         name: ['']
+    //         name: [item.name]
     //       });
     //     });
     //     this.formArrayGroup.setControl('items', this.fb.array(controls));

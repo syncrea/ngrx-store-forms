@@ -33,7 +33,7 @@ export function testFormReducer(state: any = { form1: {}, form2: { value: { item
         form2: {
           ...state.form2,
           value: {
-            items: !!!state.form2.value.items ? [{}] : [...state.form2.value.items, {}]
+            items: !!!state.form2.value.items ? [{}] : [...state.form2.value.items, { name: 'testj'}]
           }
         }
       };
