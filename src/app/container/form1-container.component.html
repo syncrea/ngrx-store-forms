@@ -1,5 +1,8 @@
-<rxsf-form1 [formGroup]="formGroup"
-            [formState]="formState | async">
+<rxsf-form1 [formGroup]="formGroup" [formState]="formState | async">
 </rxsf-form1>
 <button (click)="reset()">Reset</button>
 <button (click)="resetCustom()">Custom Reset</button>
+
+<hr>
+<h2>Form array</h2>
+<rxsf-form-array [formGroup]="formArrayGroup" (addFormArrayItem)="addFormArrayItem()"></rxsf-form-array>
