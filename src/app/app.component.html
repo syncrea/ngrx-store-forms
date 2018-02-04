@@ -1,2 +1,14 @@
-<rxsf-form1-container *ngIf="show"></rxsf-form1-container>
-<button (click)="show = !show">Show / Hide</button>
+<h1>Examples</h1>
+
+<section>
+  <h2>Simple form</h2>
+  <rxsf-simple-form-container *ngIf="show"></rxsf-simple-form-container>
+  <button (click)="show = !show">Show / Hide</button>
+  <hr>
+</section>
+
+<section>
+  <h2>User form with server data and form array</h2>
+  <rxsf-user-form-container></rxsf-user-form-container>
+  <hr>
+</section>

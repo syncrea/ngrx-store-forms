@@ -4,57 +4,48 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { StoreFormsModule } from '../lib/store-forms.module';
 import { ReactiveFormsModule } from '@angular/forms';
-import { Action, StoreModule } from '@ngrx/store';
+import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { storeFormsMetaReducer } from '../lib/reducer';
-import { Form1ContainerComponent } from './container/form1-container.component';
-import { Form1Component } from './components/form1.component';
+import { SimpleFormContainerComponent } from './simple-form/simple-form-container.component';
+import { SimpleFormComponent } from './simple-form/simple-form.component';
+import { UserFormContainerComponent } from './user-form/user-form-container.component';
+import { UserFormComponent } from './user-form/user-form.component';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreFormsEffects } from '../lib/effects';
-
-export function testFormReducer(state: any = {form1: {}}, action: Action) {
-  switch (action.type) {
-    case 'CustomUpdateAction': {
-      return {
-        ...state,
-        form1: {
-          ...state.form1,
-          value: {
-            ...state.form1.value,
-            name: 'Custom reset'
-          }
-        }
-      };
-    }
-  }
-
-  return state;
-}
+import { simpleFormReducer } from './simple-form/simple-form.reducer';
+import { userFormReducer } from './user-form/user-form.reducer';
+import { UserFormEffects } from './user-form/user-form.effects';
+import { UserFormService } from './user-form/user-form.service';
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    Form1ContainerComponent,
-    Form1Component
+    SimpleFormContainerComponent,
+    SimpleFormComponent,
+    UserFormContainerComponent,
+    UserFormComponent
   ],
   imports: [
     BrowserModule,
     ReactiveFormsModule,
     StoreModule.forRoot({
-      testForm: testFormReducer
+      simpleForm: simpleFormReducer,
+      userForm: userFormReducer
     }, {
       metaReducers: [storeFormsMetaReducer]
     }),
     StoreDevtoolsModule.instrument(),
     EffectsModule.forRoot([
-      StoreFormsEffects
+      StoreFormsEffects,
+      UserFormEffects
     ]),
     StoreFormsModule.forRoot({
       bindingStrategy: 'ObserveStore',
       errorMessages: {
-        testForm: {
-          form1: {
+        simpleForm: {
+          form: {
             name: {
               required: 'Name is required!'
             },
@@ -67,7 +58,9 @@ export function testFormReducer(state: any = {form1: {}}, action: Action) {
       }
     })
   ],
-  providers: [],
+  providers: [
+    UserFormService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {
