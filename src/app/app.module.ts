@@ -50,7 +50,7 @@ export function testFormReducer(state: any = {form1: {}}, action: Action) {
     EffectsModule.forRoot([
       StoreFormsEffects
     ]),
-    StoreFormsModule.configure({
+    StoreFormsModule.forRoot({
       bindingStrategy: 'ObserveStore',
       errorMessages: {
         testForm: {

@@ -11,21 +11,29 @@ import {UpdateStoreFormStateAction} from './reducer';
 @Injectable()
 export class BindingService {
   private bindings: {[k: string]: StoreFormBinding} = {};
+  private pathPrefix = '';
 
   constructor(@Inject(STORE_FORMS_CONFIG) private config: StoreFormsConfig,
-              @Optional() private store: Store<any>) {
+              @Optional() private store: Store<any>,
+              @Optional() private feature: string) {
     if (!this.store) {
       noStoreError();
+    }
+
+    if (this.feature) {
+      this.pathPrefix = `${feature}.`;
     }
   }
 
   bind(path: string, formGroup: FormGroup) {
+    const pathWithPrefix = `${this.pathPrefix}${path}`;
+
     const formGroupSubscription = formGroup.statusChanges
       .pipe(
         startWith(true)
       )
       .subscribe(() => {
-        this.store.dispatch(new UpdateStoreFormStateAction(path, {
+        this.store.dispatch(new UpdateStoreFormStateAction(pathWithPrefix, {
           value: {
             ...formGroup.getRawValue()
           },
@@ -40,16 +48,16 @@ export class BindingService {
         }));
       });
 
-    this.bindings[path] = {
-      path,
+    this.bindings[pathWithPrefix] = {
+      path: pathWithPrefix,
       formGroup,
       formGroupSubscription
     };
 
     if (this.config.bindingStrategy === 'ObserveStore') {
-      this.bindings[path].storeSubscription = this.store
+      this.bindings[pathWithPrefix].storeSubscription = this.store
         .pipe(
-          map((state) => deepGet(state, path)),
+          map((state) => deepGet(state, pathWithPrefix)),
           filter((formState: FormGroupState) => {
             // Very simple dirty checking by comparing current values in
             // state to values in form group using deep equal to prevent
@@ -93,19 +101,21 @@ export class BindingService {
   }
 
   unbind(path: string) {
-    this.bindings[path].formGroupSubscription.unsubscribe();
-    if (this.bindings[path].storeSubscription) {
-      this.bindings[path].storeSubscription.unsubscribe();
+    const pathWithPrefix = `${this.pathPrefix}${path}`;
+    this.bindings[pathWithPrefix].formGroupSubscription.unsubscribe();
+    if (this.bindings[pathWithPrefix].storeSubscription) {
+      this.bindings[pathWithPrefix].storeSubscription.unsubscribe();
     }
-    delete this.bindings[path];
+    delete this.bindings[pathWithPrefix];
   }
 
   updateFormGroup(path: string, value: {[k: string]: string}) {
-    if (!this.bindings[path]) {
-      noStoreFormBinding(path);
+    const pathWithPrefix = `${this.pathPrefix}${path}`;
+    if (!this.bindings[pathWithPrefix]) {
+      noStoreFormBinding(pathWithPrefix);
     }
 
-    const binding = this.bindings[path];
+    const binding = this.bindings[pathWithPrefix];
     binding.formGroup.patchValue(value);
   }
 }

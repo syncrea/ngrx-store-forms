@@ -5,7 +5,7 @@ import {BindingDirective} from './binding.directive';
 import {Store} from '@ngrx/store';
 import {BindingService} from './binding.service';
 import {StoreFormsConfig} from './model';
-import {STORE_FORMS_CONFIG} from './tokens';
+import { STORE_FORMS_CONFIG, STORE_FORMS_FEATURE } from './tokens';
 
 export const defaultStoreFormsConfig: StoreFormsConfig = {
   bindingStrategy: 'ObserveStore'
@@ -33,7 +33,7 @@ export const defaultStoreFormsConfig: StoreFormsConfig = {
   }]
 })
 export class StoreFormsModule {
-  static configure(config?: StoreFormsConfig): ModuleWithProviders {
+  static forRoot(config?: StoreFormsConfig): ModuleWithProviders {
     return {
       ngModule: StoreFormsModule,
       providers: [{
@@ -43,6 +43,23 @@ export class StoreFormsModule {
         provide: BindingService,
         useClass: BindingService,
         deps: [STORE_FORMS_CONFIG, Store]
+      }]
+    };
+  }
+
+  static forFeature(feature: string, config?: StoreFormsConfig): ModuleWithProviders {
+    return {
+      ngModule: StoreFormsModule,
+      providers: [{
+        provide: STORE_FORMS_CONFIG,
+        useValue: {...defaultStoreFormsConfig, ...config}
+      }, {
+        provide: BindingService,
+        useClass: BindingService,
+        deps: [STORE_FORMS_CONFIG, Store, STORE_FORMS_FEATURE]
+      }, {
+        provide: STORE_FORMS_FEATURE,
+        useValue: feature
       }]
     };
   }

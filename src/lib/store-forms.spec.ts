@@ -81,7 +81,7 @@ describe('ngrx store forms', () => {
             metaReducers: [storeFormsMetaReducer]
           }),
           EffectsModule.forRoot([StoreFormsEffects]),
-          StoreFormsModule.configure()
+          StoreFormsModule.forRoot()
         ],
         declarations: [
           SimpleFormTestComponent
@@ -269,7 +269,7 @@ describe('ngrx store forms', () => {
     class FormArrayTestComponent {
       formArrayTestFormGroup: FormGroup;
 
-      constructor(private fb: FormBuilder) {
+      constructor() {
         this.formArrayTestFormGroup = fb.group({
           items: fb.array([
             fb.group({
@@ -301,7 +301,7 @@ describe('ngrx store forms', () => {
             metaReducers: [storeFormsMetaReducer]
           }),
           EffectsModule.forRoot([StoreFormsEffects]),
-          StoreFormsModule.configure()
+          StoreFormsModule.forRoot()
         ],
         declarations: [
           FormArrayTestComponent
