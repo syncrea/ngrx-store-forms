@@ -21,7 +21,7 @@ export class StoreFormsEffects {
             .pipe(
               take(1),
               map((state: any) => {
-                const formState: FormGroupState = deepGet(state, action.path);
+                const formState: FormGroupState = deepGet(state, action.path, true);
                 return new UpdateStoreFormStateAction(action.path, {
                   ...formState,
                   value: {

@@ -1,7 +1,12 @@
-export function deepGet(object: any, path: string) {
+export function deepGet(object: any, path: string, throwOnMiss = false) {
   return path
     .split('.')
-    .reduce((partialState, pathSegment) => partialState[pathSegment] || {}, object);
+    .reduce((partialState, pathSegment) => {
+      if (throwOnMiss && typeof partialState[pathSegment] !== 'object') {
+        throw new Error(`Path '${path}' could not be resolved in object ${object}. Segment '${pathSegment}' was not referring to type object.`);
+      }
+      return partialState[pathSegment] || {};
+    }, object);
 }
 
 export function deepEquals(x, y) {

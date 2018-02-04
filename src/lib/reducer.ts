@@ -14,7 +14,7 @@ export class UpdateStoreFormAction implements Action {
   readonly type = 'UpdateStoreFormAction';
 
   constructor(public readonly path: string,
-              public readonly value: {[k: string]: string}) {
+              public readonly value: any) {
   }
 }
 

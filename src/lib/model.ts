@@ -20,7 +20,7 @@ export interface StoreFormsConfig {
 }
 
 export interface FormGroupState {
-  value?: {[k: string]: string};
+  value?: any;
   errors?: any;
   untouched?: boolean;
   touched?: boolean;
