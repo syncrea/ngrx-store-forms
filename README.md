@@ -4,8 +4,6 @@
 
 Simple adapter with bindings between @angular/reactive-forms and @ngrx/store.
 
-# WIP / Open tasks
-
 # Examples
 
 ## Adding ngrx-store-forms to your root module
