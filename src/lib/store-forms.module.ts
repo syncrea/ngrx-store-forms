@@ -5,11 +5,15 @@ import {BindingDirective} from './binding.directive';
 import {Store} from '@ngrx/store';
 import {BindingService} from './binding.service';
 import {StoreFormsConfig} from './model';
-import { STORE_FORMS_CONFIG, STORE_FORMS_FEATURE } from './tokens';
+import {STORE_FORMS_CONFIG, _STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
 
 export const defaultStoreFormsConfig: StoreFormsConfig = {
   bindingStrategy: 'ObserveStore'
 };
+
+export function configFactory(config?: StoreFormsConfig): StoreFormsConfig {
+  return { ...defaultStoreFormsConfig, ...config };
+}
 
 @NgModule({
   imports: [
@@ -22,23 +26,19 @@ export const defaultStoreFormsConfig: StoreFormsConfig = {
   ],
   exports: [
     BindingDirective
-  ],
-  providers: [{
-    provide: STORE_FORMS_CONFIG,
-    useValue: defaultStoreFormsConfig
-  }, {
-    provide: BindingService,
-    useClass: BindingService,
-    deps: [STORE_FORMS_CONFIG, Store]
-  }]
+  ]
 })
 export class StoreFormsModule {
   static forRoot(config?: StoreFormsConfig): ModuleWithProviders {
     return {
       ngModule: StoreFormsModule,
       providers: [{
+        provide: _STORE_FORMS_CONFIG,
+        useValue: config
+      }, {
         provide: STORE_FORMS_CONFIG,
-        useValue: {...defaultStoreFormsConfig, ...config}
+        useFactory: configFactory,
+        deps: [_STORE_FORMS_CONFIG]
       }, {
         provide: BindingService,
         useClass: BindingService,
@@ -51,8 +51,12 @@ export class StoreFormsModule {
     return {
       ngModule: StoreFormsModule,
       providers: [{
+        provide: _STORE_FORMS_CONFIG,
+        useValue: config
+      }, {
         provide: STORE_FORMS_CONFIG,
-        useValue: {...defaultStoreFormsConfig, ...config}
+        useFactory: configFactory,
+        deps: [_STORE_FORMS_CONFIG]
       }, {
         provide: BindingService,
         useClass: BindingService,
