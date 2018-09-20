@@ -1,0 +1,135 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "ngrx-store-forms": {
+      "root": "projects/ngrx-store-forms",
+      "sourceRoot": "projects/ngrx-store-forms/src",
+      "projectType": "library",
+      "prefix": "rxsf",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/ngrx-store-forms/tsconfig.lib.json",
+            "project": "projects/ngrx-store-forms/ng-package.json"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/ngrx-store-forms/src/test.ts",
+            "tsConfig": "projects/ngrx-store-forms/tsconfig.spec.json",
+            "karmaConfig": "projects/ngrx-store-forms/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/ngrx-store-forms/tsconfig.lib.json",
+              "projects/ngrx-store-forms/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    },
+    "ngrx-store-forms-docs": {
+      "root": "projects/ngrx-store-forms-docs/",
+      "sourceRoot": "projects/ngrx-store-forms-docs/src",
+      "projectType": "application",
+      "prefix": "app",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/ngrx-store-forms-docs",
+            "index": "projects/ngrx-store-forms-docs/src/index.html",
+            "main": "projects/ngrx-store-forms-docs/src/main.ts",
+            "polyfills": "projects/ngrx-store-forms-docs/src/polyfills.ts",
+            "tsConfig": "projects/ngrx-store-forms-docs/tsconfig.app.json",
+            "assets": [
+              "projects/ngrx-store-forms-docs/src/favicon.ico",
+              "projects/ngrx-store-forms-docs/src/assets"
+            ],
+            "styles": [
+              "projects/ngrx-store-forms-docs/src/styles.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/ngrx-store-forms-docs/src/environments/environment.ts",
+                  "with": "projects/ngrx-store-forms-docs/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "ngrx-store-forms-docs:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "ngrx-store-forms-docs:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "ngrx-store-forms-docs:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/ngrx-store-forms-docs/src/test.ts",
+            "polyfills": "projects/ngrx-store-forms-docs/src/polyfills.ts",
+            "tsConfig": "projects/ngrx-store-forms-docs/tsconfig.spec.json",
+            "karmaConfig": "projects/ngrx-store-forms-docs/karma.conf.js",
+            "styles": [
+              "projects/ngrx-store-forms-docs/src/styles.css"
+            ],
+            "scripts": [],
+            "assets": [
+              "projects/ngrx-store-forms-docs/src/favicon.ico",
+              "projects/ngrx-store-forms-docs/src/assets"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/ngrx-store-forms-docs/tsconfig.app.json",
+              "projects/ngrx-store-forms-docs/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "defaultProject": "ngrx-store-forms-docs"
+}
