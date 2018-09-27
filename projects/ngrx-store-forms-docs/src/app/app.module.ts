@@ -51,6 +51,15 @@ import {UserFormService} from './user-form/user-form.service';
               userNameTaken: 'The user name is already taken!'
             }
           }
+        },
+        userForm: {
+          userForm: {
+            addresses: {
+              street: {
+                required: 'Street required!'
+              }
+            }
+          }
         }
       }
     })

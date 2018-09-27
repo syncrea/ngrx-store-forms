@@ -1,4 +1,4 @@
-import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 import {Action, Store, StoreModule} from '@ngrx/store';
 import {FormGroupState} from './store-forms.model';
 import {storeFormsMetaReducer} from './store-forms.reducer';
@@ -9,7 +9,6 @@ import {take} from 'rxjs/operators';
 import {EffectsModule} from '@ngrx/effects';
 import {StoreFormsEffects} from './store-forms.effects';
 import {UpdateStoreFormAction, UpdateStoreFormStateAction} from './store-forms.actions';
-import Spy = jasmine.Spy;
 
 describe('ngrx store forms', () => {
 
@@ -82,7 +81,9 @@ describe('ngrx store forms', () => {
             metaReducers: [storeFormsMetaReducer]
           }),
           EffectsModule.forRoot([StoreFormsEffects]),
-          StoreFormsModule.forRoot()
+          StoreFormsModule.forRoot({
+            debounce: 0
+          })
         ],
         declarations: [
           SimpleFormTestComponent
@@ -97,7 +98,7 @@ describe('ngrx store forms', () => {
       fixture.detectChanges();
     });
 
-    it('should update name in store on form field input', () => {
+    it('should update name in store on form field input', async(() => {
       const nativeNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#name');
       nativeNameInput.value = 'Bob';
       nativeNameInput.dispatchEvent(new Event('input'));
@@ -122,9 +123,9 @@ describe('ngrx store forms', () => {
             })
           );
       });
-    });
+    }));
 
-    it('should update name and userName in store on form fields input', () => {
+    it('should update name and userName in store on form fields input', async(() => {
       const nativeNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#name');
       nativeNameInput.value = 'Bob';
       nativeNameInput.dispatchEvent(new Event('input'));
@@ -153,9 +154,9 @@ describe('ngrx store forms', () => {
             })
           );
       });
-    });
+    }));
 
-    it('should update form inputs on store changes with custom action', () => {
+    it('should update form inputs on store changes with custom action', async(() => {
       const nativeNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#name');
       const nativeUserNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#userName');
 
@@ -166,9 +167,9 @@ describe('ngrx store forms', () => {
         expect(nativeNameInput.value).toBe('Bob');
         expect(nativeUserNameInput.value).toBe('bob');
       });
-    });
+    }));
 
-    it('should update form inputs on store changes with UpdateStoreFormAction', () => {
+    it('should update form inputs on store changes with UpdateStoreFormAction', async(() => {
       const nativeNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#name');
       const nativeUserNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#userName');
 
@@ -182,9 +183,9 @@ describe('ngrx store forms', () => {
         expect(nativeNameInput.value).toBe('Bob');
         expect(nativeUserNameInput.value).toBe('bob');
       });
-    });
+    }));
 
-    it('should update partial form inputs on store changes with UpdateStoreFormAction', () => {
+    it('should update partial form inputs on store changes with UpdateStoreFormAction', async(() => {
       const nativeNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#name');
       const nativeUserNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#userName');
 
@@ -203,7 +204,7 @@ describe('ngrx store forms', () => {
             expect(nativeUserNameInput.value).toBe('');
           });
         });
-    });
+    }));
   });
 
   describe('Form array', () => {
@@ -231,7 +232,7 @@ describe('ngrx store forms', () => {
       switch (action.type) {
         case 'FormArrayTestUpdateAction':
           const items = [
-            ...state.form.value.items
+            ...state.form.value['items']
           ];
           items[action.index] = {
             name: action.name,
@@ -302,7 +303,9 @@ describe('ngrx store forms', () => {
             metaReducers: [storeFormsMetaReducer]
           }),
           EffectsModule.forRoot([StoreFormsEffects]),
-          StoreFormsModule.forRoot()
+          StoreFormsModule.forRoot({
+            debounce: 0
+          })
         ],
         declarations: [
           FormArrayTestComponent
@@ -319,7 +322,7 @@ describe('ngrx store forms', () => {
       fixture.detectChanges();
     });
 
-    it('should update name in store form array on form field input', () => {
+    it('should update name in store form array on form field input', async(() => {
       const nativeNameInput: HTMLInputElement = fixture.nativeElement.querySelector('.form-group-0 .name');
       nativeNameInput.value = 'Bob';
       nativeNameInput.dispatchEvent(new Event('input'));
@@ -349,9 +352,9 @@ describe('ngrx store forms', () => {
             })
           );
       });
-    });
+    }));
 
-    it('should update specific form elements in form array using custom update action', () => {
+    it('should update specific form elements in form array using custom update action', async(() => {
       const nativeNameInput: HTMLInputElement = fixture.nativeElement.querySelector('.form-group-1 .name');
       const nativeUserNameInput: HTMLInputElement = fixture.nativeElement.querySelector('.form-group-1 .user-name');
 
@@ -362,9 +365,9 @@ describe('ngrx store forms', () => {
         expect(nativeNameInput.value).toBe('Bob');
         expect(nativeUserNameInput.value).toBe('bob');
       });
-    });
+    }));
 
-    it('should update specific form elements in form array using UpdateStoreFormStateAction', () => {
+    it('should update specific form elements in form array using UpdateStoreFormStateAction', async(() => {
       const nativeNameInput: HTMLInputElement = fixture.nativeElement.querySelector('.form-group-1 .name');
       const nativeUserNameInput: HTMLInputElement = fixture.nativeElement.querySelector('.form-group-1 .user-name');
 
@@ -381,10 +384,10 @@ describe('ngrx store forms', () => {
         expect(nativeNameInput.value).toBe('Bob');
         expect(nativeUserNameInput.value).toBe('bob');
       });
-    });
+    }));
 
-    it('should update with dynamically added form array item', () => {
-      const formArray = component.formArrayTestFormGroup.get('items') as FormArray;
+    it('should update with dynamically added form array item', async(() => {
+      const formArray = <FormArray>component.formArrayTestFormGroup.get('items');
       formArray.push(fb.group({
         name: 'Dynamic',
         userName: 'dynamic'
@@ -418,15 +421,15 @@ describe('ngrx store forms', () => {
             })
           );
       });
-    });
+    }));
 
-    it('should update with dynamically removed form array item', () => {
-      const formArray = component.formArrayTestFormGroup.get('items') as FormArray;
+    it('should update with dynamically removed form array item', async(() => {
+      const formArray = <FormArray>component.formArrayTestFormGroup.get('items');
       formArray.removeAt(0);
 
       fixture.detectChanges();
       fixture.whenStable().then(() => {
-        expect((<Spy>store.dispatch).calls.mostRecent().args[0]).toEqual(
+        expect(store.dispatch).toHaveBeenCalledWith(
             new UpdateStoreFormStateAction('test.form', {
               value: {
                 items: [{
@@ -445,6 +448,6 @@ describe('ngrx store forms', () => {
             })
           );
       });
-    });
+    }));
   });
 });

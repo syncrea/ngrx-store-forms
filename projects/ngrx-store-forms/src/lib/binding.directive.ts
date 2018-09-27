@@ -1,5 +1,5 @@
-import {Directive, Input, OnDestroy, OnInit, Optional, Self} from '@angular/core';
-import {FormGroupDirective} from '@angular/forms';
+import {Directive, Input, OnChanges, OnDestroy, Optional, Self, SimpleChanges} from '@angular/core';
+import {FormGroup, FormGroupDirective} from '@angular/forms';
 import {StoreFormsService} from './store-forms.service';
 import {Store} from '@ngrx/store';
 import {noFormGroupError, noStoreError} from './errors';
@@ -7,8 +7,9 @@ import {noFormGroupError, noStoreError} from './errors';
 @Directive({
   selector: '[rxsfBinding]'
 })
-export class BindingDirective implements OnInit, OnDestroy {
+export class BindingDirective implements OnDestroy, OnChanges {
   @Input() rxsfBinding: string;
+  @Input() formGroup: FormGroup;
 
   constructor(@Self() @Optional() private formGroupDirective: FormGroupDirective,
               @Optional() private store: Store<any>,
@@ -22,11 +23,19 @@ export class BindingDirective implements OnInit, OnDestroy {
     }
   }
 
-  ngOnInit() {
-     this.storeFormsService.bind(
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.formGroup) {
+      this.storeFormsService.replaceBinding(
         this.rxsfBinding,
-        this.formGroupDirective.form
+        this.formGroup
       );
+    } else if (changes.rxsfBinding) {
+      this.storeFormsService.unbind(changes.rxsfBinding.previousValue);
+      this.storeFormsService.replaceBinding(
+        this.rxsfBinding,
+        this.formGroup
+      );
+    }
   }
 
   ngOnDestroy() {

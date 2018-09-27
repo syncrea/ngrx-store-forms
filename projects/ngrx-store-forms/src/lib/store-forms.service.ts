@@ -3,18 +3,18 @@ import {Store} from '@ngrx/store';
 import {filter, map, startWith} from 'rxjs/operators';
 import {Inject, Injectable, Optional} from '@angular/core';
 import {noStoreError, noStoreFormBinding} from './errors';
-import {STORE_FORMS_CONFIG} from './tokens';
-import {ErrorMessages, FormGroupState, StoreFormBinding, StoreFormsConfig} from './store-forms.model';
-import {deepEquals, deepGet} from './helper';
+import {STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
+import {FormGroupState, StoreFormBinding, StoreFormsConfig} from './store-forms.model';
+import {deepEquals, deepGet, getErrors} from './helper';
 import {UpdateStoreFormStateAction} from './store-forms.actions';
-import {STORE_FORMS_FEATURE} from './tokens';
+import {debounceTime} from "rxjs/internal/operators";
 
 @Injectable()
 export class StoreFormsService {
   private bindings: {[k: string]: StoreFormBinding} = {};
   private pathPrefix = '';
 
-  constructor(@Inject(STORE_FORMS_CONFIG) @Optional() private config: StoreFormsConfig,
+  constructor(@Inject(STORE_FORMS_CONFIG) private config: StoreFormsConfig,
               @Optional() private store: Store<any>,
               @Inject(STORE_FORMS_FEATURE) @Optional() private feature: string) {
     if (!this.store) {
@@ -28,11 +28,16 @@ export class StoreFormsService {
 
   bind(path: string, formGroup: FormGroup) {
     const pathWithPrefix = `${this.pathPrefix}${path}`;
+    let pipes = [
+      startWith(true)
+    ];
+
+    if (this.config.debounce) {
+      pipes = [...pipes, debounceTime(this.config.debounce)];
+    }
 
     const formGroupSubscription = formGroup.statusChanges
-      .pipe(
-        startWith(true)
-      )
+      .pipe(...pipes)
       .subscribe(() => {
         this.store.dispatch(new UpdateStoreFormStateAction(pathWithPrefix, {
           value: {
@@ -45,7 +50,7 @@ export class StoreFormsService {
           valid: formGroup.valid,
           invalid: formGroup.invalid,
           pending: formGroup.pending,
-          errors: this.getErrors(path, formGroup)
+          errors: getErrors(formGroup, this.config.errorMessages, pathWithPrefix.split('.'))
         }));
       });
 
@@ -75,39 +80,22 @@ export class StoreFormsService {
     }
   }
 
-  private getErrors(path: string, formGroup: FormGroup) {
-    if (!this.config.errorMessages) {
-      return {};
-    }
-
-    const errorMessages: ErrorMessages = deepGet(this.config.errorMessages, path);
-
-    return Object.keys(formGroup.controls).reduce((groupErrors, controlName: string) => {
-      const control = formGroup.controls[controlName];
-      if (control.errors) {
-        groupErrors[controlName] = Object.keys(control.errors).reduce((errors, validatorKey) => {
-          if (control.errors &&
-            control.errors[validatorKey] &&
-            errorMessages[controlName] && errorMessages[controlName][validatorKey]) {
-            const errorMessage = errorMessages[controlName][validatorKey];
-            if (errors.indexOf(errorMessage) === -1) {
-              errors.push(errorMessage);
-            }
-          }
-          return errors;
-        }, <string[]>[]);
-      }
-      return groupErrors;
-    }, {});
-  }
-
   unbind(path: string) {
     const pathWithPrefix = `${this.pathPrefix}${path}`;
+    if (!this.bindings[pathWithPrefix]) {
+      return;
+    }
+
     this.bindings[pathWithPrefix].formGroupSubscription.unsubscribe();
     if (this.bindings[pathWithPrefix].storeSubscription) {
       this.bindings[pathWithPrefix].storeSubscription.unsubscribe();
     }
     delete this.bindings[pathWithPrefix];
+  }
+
+  replaceBinding(path: string, replace: FormGroup) {
+    this.unbind(path);
+    this.bind(path, replace);
   }
 
   getFormGroup(path: string) {
@@ -126,6 +114,6 @@ export class StoreFormsService {
     }
 
     const binding = this.bindings[pathWithPrefix];
-    binding.formGroup.patchValue(value);
+    binding.formGroup.setValue(value);
   }
 }

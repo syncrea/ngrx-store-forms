@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
 import {FormGroupState} from 'ngrx-store-forms';
-import {FormArray, FormBuilder, FormGroup} from '@angular/forms';
-import {Action, Store} from '@ngrx/store';
+import {FormArray, FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {Action, select, Store} from '@ngrx/store';
 import {Observable} from 'rxjs';
 import {LoadUserFormAction, LoadUserFormSuccessAction} from './user-form.actions';
 import {Actions} from '@ngrx/effects';
@@ -28,7 +28,9 @@ export class UserFormContainerComponent {
 
     this.store.dispatch(new LoadUserFormAction());
 
-    this.userFormState = store.select((state: any) => state.userForm.form);
+    this.userFormState = store.pipe(
+      select((state: any) => state.userForm.userForm)
+    );
     this.userFormGroup = fb.group({
       name: '',
       userName: '',
@@ -41,23 +43,29 @@ export class UserFormContainerComponent {
       map((action: LoadUserFormSuccessAction) => fb.group({
         name: action.userForm.name,
         userName: action.userForm.userName,
-        addresses: fb.array(action.userForm.addresses.map((address) => fb.group(address)))
+        addresses: fb.array(action.userForm.addresses.map((address) => fb.group({
+          street: [address.street, Validators.required],
+          postalCode: address.postalCode,
+          city: address.city,
+          country: address.country
+        })))
       }))
     ).subscribe((serverFormGroup: FormGroup) => this.userFormGroup = serverFormGroup);
   }
 
   removeAddress(index: number) {
-    const addresses = this.userFormGroup.get('addresses') as FormArray;
+    const addresses = <FormArray>this.userFormGroup.get('addresses');
     addresses.removeAt(index);
   }
 
   addAddress() {
-    const addresses = this.userFormGroup.get('addresses') as FormArray;
-    addresses.push(this.fb.group(<UserAddress>{
-      street: '',
+    const addresses = <FormArray>this.userFormGroup.get('addresses');
+    addresses.push(this.fb.group({
+      street: ['', Validators.required],
       city: '',
       postalCode: '',
       country: ''
     }));
+    addresses.clearValidators();
   }
 }

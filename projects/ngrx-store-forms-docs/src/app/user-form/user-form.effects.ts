@@ -9,7 +9,7 @@ import {StoreFormsService} from 'ngrx-store-forms';
 
 @Injectable()
 export class UserFormEffects {
-  constructor(private actions: Actions, private userFormService: UserFormService, private storeFormsService: StoreFormsService) {}
+  constructor(private actions: Actions, private userFormService: UserFormService) {}
 
   @Effect() loadUserForm = this.actions
     .pipe(

@@ -8,7 +8,8 @@ import {StoreFormsConfig} from './store-forms.model';
 import {STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
 
 export const defaultStoreFormsConfig: StoreFormsConfig = {
-  bindingStrategy: 'ObserveStore'
+  bindingStrategy: 'ObserveStore',
+  debounce: 100
 };
 
 @NgModule({

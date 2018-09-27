@@ -6,7 +6,7 @@ import {FormArray, FormGroup} from '@angular/forms';
   selector: 'app-user-form',
   template: `
     <form [formGroup]="userFormGroup"
-          rxsfBinding="userForm.form"
+          rxsfBinding="userForm.userForm"
           novalidate>
       <label>Name: <input formControlName="name"></label>
       <label>Username: <input formControlName="userName"></label>
@@ -15,14 +15,23 @@ import {FormArray, FormGroup} from '@angular/forms';
         <button (click)="addAddress()">Add new address</button>
         <div *ngFor="let control of addresses.controls; let i = index"
              [formGroupName]="i" class="form-group-{{i}}">
-          <input formControlName="street">
-          <input formControlName="city">
+          <div>
+            <input formControlName="street"
+[style.borderColor]="control.dirty && formState.errors['addresses'] && formState.errors['addresses'][i]?.street ? 'red' : ''">
+            <ng-container *ngIf="control.dirty && formState.errors['addresses'] && formState.errors['addresses'][i]?.street">
+              <p *ngFor="let message of formState.errors['addresses'][i].street.messages">{{message}}</p>
+            </ng-container>
+          </div>
+            <input formControlName="city">
           <input formControlName="postalCode">
           <input formControlName="country">
           <button (click)="removeAddress(i)">remove</button>
         </div>
       </div>
     </form>
+    <div>
+      {{formState | json}}
+    </div>
   `
 })
 export class UserFormComponent {

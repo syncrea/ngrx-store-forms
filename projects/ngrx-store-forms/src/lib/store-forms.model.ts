@@ -12,16 +12,26 @@ export interface ErrorMessages {
   [k: string]: ErrorMessages | string;
 }
 
+export interface ResolvedErrorMessage {
+  messages: string[];
+  validators: { [k: string]: boolean };
+}
+
+export interface ResolvedErrorMessages {
+  [k: string]: ResolvedErrorMessages | ResolvedErrorMessage;
+}
+
 export type StoreFormsBindingStrategy = 'ObserveStore' | 'OnlyUpdateStoreFormAction';
 
 export interface StoreFormsConfig {
   bindingStrategy?: StoreFormsBindingStrategy;
   errorMessages?: ErrorMessages;
+  debounce?: number;
 }
 
 export interface FormGroupState {
-  value?: any;
-  errors?: any;
+  value?: { [k: string]: any } | FormGroupState | FormGroupState[];
+  errors?: ResolvedErrorMessages;
   untouched?: boolean;
   touched?: boolean;
   pristine?: boolean;

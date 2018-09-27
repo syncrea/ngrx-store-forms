@@ -1,3 +1,7 @@
+import {AbstractControl, FormArray, FormGroup} from '@angular/forms';
+import {ErrorMessages} from './store-forms.model';
+import {ResolvedErrorMessages} from "ngrx-store-forms/lib/store-forms.model";
+
 export function deepGet(object: any, path: string, throwOnMiss = false): any {
   return path
     .split('.')
@@ -45,4 +49,44 @@ export function deepEquals(x, y) {
     }
     return true;
   }
+}
+
+export function getErrors(control: AbstractControl,
+                          errorMessages: ErrorMessages,
+                          pathPrefix: string[],
+                          resolvedErrorMessages: ResolvedErrorMessages = {},
+                          path: string[] = []): ResolvedErrorMessages {
+  if (control instanceof FormGroup) {
+    Object.keys(control.controls)
+      .map(key => ({name: key, control: control.controls[key]}))
+      .forEach(entry => getErrors(entry.control, errorMessages, pathPrefix, resolvedErrorMessages, [...path, entry.name]));
+  } else if (control instanceof FormArray) {
+    control.controls.forEach(
+      (subControl, index) => getErrors(subControl, errorMessages, pathPrefix, resolvedErrorMessages, [...path, `${index}`])
+    );
+  } else {
+    if (control.errors) {
+      const initialPath = [...path];
+      const lastPathElement = initialPath.pop();
+      const err: ResolvedErrorMessages = <any>initialPath
+        .reduce((errorsWalker, pathElement) => errorsWalker[pathElement] || (errorsWalker[pathElement] = {}), resolvedErrorMessages);
+      const normalizedPath = path.filter(pathElement => !(/^\d+$/g.test(pathElement)));
+      err[lastPathElement] = {
+        validators: control.errors,
+        messages: Object.keys(control.errors)
+          .reduce((messages, validatorName) => {
+            let resolvedMessage = deepGet(errorMessages, [...pathPrefix, ...normalizedPath, validatorName].join('.'));
+            if (typeof resolvedMessage === 'object') {
+              resolvedMessage = validatorName;
+            }
+            if (messages.indexOf(resolvedMessage) !== -1) {
+              messages.push(resolvedMessage);
+            }
+            return messages;
+          }, [])
+      };
+    }
+  }
+
+  return resolvedErrorMessages;
 }
