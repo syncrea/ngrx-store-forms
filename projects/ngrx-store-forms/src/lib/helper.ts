@@ -79,7 +79,7 @@ export function getErrors(control: AbstractControl,
             if (typeof resolvedMessage === 'object') {
               resolvedMessage = validatorName;
             }
-            if (messages.indexOf(resolvedMessage) !== -1) {
+            if (messages.indexOf(resolvedMessage) === -1) {
               messages.push(resolvedMessage);
             }
             return messages;
