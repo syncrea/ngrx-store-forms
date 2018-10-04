@@ -12,13 +12,8 @@ export interface ErrorMessages {
   [k: string]: ErrorMessages | string;
 }
 
-export interface ResolvedErrorMessage {
-  messages: string[];
-  validators: { [k: string]: boolean };
-}
-
 export interface ResolvedErrorMessages {
-  [k: string]: ResolvedErrorMessages | ResolvedErrorMessage;
+  [k: string]: ResolvedErrorMessages | string[];
 }
 
 export type StoreFormsBindingStrategy = 'ObserveStore' | 'OnlyUpdateStoreFormAction';
@@ -29,8 +24,8 @@ export interface StoreFormsConfig {
   debounce?: number;
 }
 
-export interface FormGroupState {
-  value?: { [k: string]: any } | FormGroupState | FormGroupState[];
+export interface FormGroupState<F = any> {
+  value?: { [k in keyof F]: string };
   errors?: ResolvedErrorMessages;
   untouched?: boolean;
   touched?: boolean;

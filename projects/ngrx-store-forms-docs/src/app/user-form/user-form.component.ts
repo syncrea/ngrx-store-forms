@@ -17,9 +17,13 @@ import {FormArray, FormGroup} from '@angular/forms';
              [formGroupName]="i" class="form-group-{{i}}">
           <div>
             <input formControlName="street"
-[style.borderColor]="control.dirty && formState.errors['addresses'] && formState.errors['addresses'][i]?.street ? 'red' : ''">
-            <ng-container *ngIf="control.dirty && formState.errors['addresses'] && formState.errors['addresses'][i]?.street">
-              <p *ngFor="let message of formState.errors['addresses'][i].street.messages">{{message}}</p>
+[style.borderColor]="control.dirty && formState.errors && 
+formState.errors['addresses'] && 
+formState.errors['addresses'][i]?.street ? 'red' : ''">
+            <ng-container *ngIf="control.dirty && 
+            formState.errors && formState.errors['addresses'] && 
+            formState.errors['addresses'][i]?.street">
+              <p *ngFor="let message of formState.errors['addresses'][i].street">{{message}}</p>
             </ng-container>
           </div>
             <input formControlName="city">

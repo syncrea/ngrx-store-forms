@@ -62,7 +62,7 @@ export class UserFormContainerComponent {
     const addresses = <FormArray>this.userFormGroup.get('addresses');
     addresses.push(this.fb.group({
       street: ['', Validators.required],
-      city: '',
+      city: 'Default City',
       postalCode: '',
       country: ''
     }));

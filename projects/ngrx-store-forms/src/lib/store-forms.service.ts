@@ -1,13 +1,14 @@
 import {FormGroup} from '@angular/forms';
 import {Store} from '@ngrx/store';
-import {filter, map, startWith} from 'rxjs/operators';
+import {filter, map} from 'rxjs/operators';
 import {Inject, Injectable, Optional} from '@angular/core';
 import {noStoreError, noStoreFormBinding} from './errors';
 import {STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
 import {FormGroupState, StoreFormBinding, StoreFormsConfig} from './store-forms.model';
 import {deepEquals, deepGet, getErrors} from './helper';
 import {UpdateStoreFormStateAction} from './store-forms.actions';
-import {debounceTime} from "rxjs/internal/operators";
+import {merge} from 'rxjs';
+import {debounceTime} from 'rxjs/operators';
 
 @Injectable()
 export class StoreFormsService {
@@ -28,31 +29,29 @@ export class StoreFormsService {
 
   bind(path: string, formGroup: FormGroup) {
     const pathWithPrefix = `${this.pathPrefix}${path}`;
-    let pipes = [
-      startWith(true)
-    ];
-
+    let observeStore = true;
+    let source = merge(formGroup.valueChanges, formGroup.statusChanges);
     if (this.config.debounce) {
-      pipes = [...pipes, debounceTime(this.config.debounce)];
+      source = source.pipe(debounceTime(this.config.debounce));
     }
 
-    const formGroupSubscription = formGroup.statusChanges
-      .pipe(...pipes)
-      .subscribe(() => {
-        this.store.dispatch(new UpdateStoreFormStateAction(pathWithPrefix, {
-          value: {
-            ...formGroup.getRawValue()
-          },
-          untouched: formGroup.untouched,
-          touched: formGroup.touched,
-          pristine: formGroup.pristine,
-          dirty: formGroup.dirty,
-          valid: formGroup.valid,
-          invalid: formGroup.invalid,
-          pending: formGroup.pending,
-          errors: getErrors(formGroup, this.config.errorMessages, pathWithPrefix.split('.'))
-        }));
-      });
+    const formGroupSubscription = source.subscribe(() => {
+      observeStore = false;
+      this.store.dispatch(new UpdateStoreFormStateAction(pathWithPrefix, {
+        value: {
+          ...formGroup.getRawValue()
+        },
+        untouched: formGroup.untouched,
+        touched: formGroup.touched,
+        pristine: formGroup.pristine,
+        dirty: formGroup.dirty,
+        valid: formGroup.valid,
+        invalid: formGroup.invalid,
+        pending: formGroup.pending,
+        errors: getErrors(formGroup, this.config.errorMessages, pathWithPrefix.split('.'))
+      }));
+      observeStore = true;
+    });
 
     this.bindings[pathWithPrefix] = {
       path: pathWithPrefix,
@@ -64,10 +63,11 @@ export class StoreFormsService {
       this.bindings[pathWithPrefix].storeSubscription = this.store
         .pipe(
           map((state) => deepGet(state, pathWithPrefix)),
+          filter(() => observeStore),
           filter((formState: FormGroupState) => {
             // Very simple dirty checking by comparing current values in
             // state to values in form group using deep equal to prevent
-            // infinite loop setValue -> store -> setValue -> store ...
+            // unwanted infinite loop
             return formState &&
               formState.value &&
               Object.keys(formState.value).length !== 0 &&
