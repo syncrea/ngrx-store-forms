@@ -72,9 +72,18 @@ export function getErrors(control: AbstractControl,
       const normalizedPath = path.filter(pathElement => !(/^\d+$/g.test(pathElement)));
       err[lastPathElement] = Object.keys(control.errors)
         .reduce((messages, validatorName) => {
-          let resolvedMessage = deepGet(errorMessages, [...pathPrefix, ...normalizedPath, validatorName].join('.'));
+          const wholePath = [...pathPrefix, ...normalizedPath];
+          let resolvedMessage = deepGet(errorMessages, [...wholePath, validatorName].join('.'));
           if (typeof resolvedMessage === 'object') {
-            resolvedMessage = validatorName;
+            const parentSearchPath = [...wholePath];
+            while (typeof resolvedMessage === 'object' && parentSearchPath.length > 0) {
+              parentSearchPath.pop();
+              resolvedMessage = deepGet(errorMessages, [...parentSearchPath, validatorName].join('.'));
+            }
+
+            if (typeof resolvedMessage === 'object') {
+              resolvedMessage = validatorName;
+            }
           }
           if (messages.indexOf(resolvedMessage) === -1) {
             messages.push(resolvedMessage);
