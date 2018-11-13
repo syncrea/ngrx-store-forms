@@ -6,11 +6,13 @@ import {filter, map, switchMap, take} from 'rxjs/operators';
 import {StoreFormsService} from './store-forms.service';
 import {STORE_FORMS_CONFIG} from './tokens';
 import {FormGroupState, StoreFormsConfig} from './store-forms.model';
-import {deepGet} from './helper';
+import {deepGet, getEffectiveConfig} from './helper';
 import {of, Observable} from 'rxjs';
 
 @Injectable()
 export class StoreFormsEffects {
+  private config: StoreFormsConfig;
+
   @Effect() reflectToFormStateEffect: Observable<Action> = this.actions
     .pipe(
       filter((action: Action) => action instanceof UpdateStoreFormAction),
@@ -39,8 +41,8 @@ export class StoreFormsEffects {
 
   constructor(private actions: Actions,
               private bindingService: StoreFormsService,
-              @Inject(STORE_FORMS_CONFIG) private config: StoreFormsConfig,
+              @Inject(STORE_FORMS_CONFIG) config: StoreFormsConfig,
               private store: Store<any>) {
-
+    this.config = getEffectiveConfig(config);
   }
 }

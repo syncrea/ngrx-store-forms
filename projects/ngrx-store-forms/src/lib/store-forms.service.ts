@@ -5,7 +5,7 @@ import {Inject, Injectable, Optional} from '@angular/core';
 import {noStoreError, noStoreFormBinding} from './errors';
 import {STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
 import {FormGroupState, StoreFormBinding, StoreFormsConfig} from './store-forms.model';
-import {deepEquals, deepGet, getErrors} from './helper';
+import {deepEquals, deepGet, getEffectiveConfig, getErrors} from './helper';
 import {UpdateStoreFormStateAction} from './store-forms.actions';
 import {merge} from 'rxjs';
 import {debounceTime} from 'rxjs/operators';
@@ -14,10 +14,13 @@ import {debounceTime} from 'rxjs/operators';
 export class StoreFormsService {
   private bindings: {[k: string]: StoreFormBinding} = {};
   private pathPrefix = '';
+  private config: StoreFormsConfig;
 
-  constructor(@Inject(STORE_FORMS_CONFIG) private config: StoreFormsConfig,
+  constructor(@Inject(STORE_FORMS_CONFIG) config: StoreFormsConfig,
               @Optional() private store: Store<any>,
               @Inject(STORE_FORMS_FEATURE) @Optional() private feature: string) {
+    this.config = getEffectiveConfig(config);
+
     if (!this.store) {
       noStoreError();
     }

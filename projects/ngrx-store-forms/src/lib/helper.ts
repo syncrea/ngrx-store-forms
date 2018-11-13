@@ -1,5 +1,6 @@
 import {AbstractControl, FormArray, FormGroup} from '@angular/forms';
-import {ErrorMessages, ResolvedErrorMessages} from './store-forms.model';
+import {StoreFormsConfig, ErrorMessages, ResolvedErrorMessages} from './store-forms.model';
+import {defaultStoreFormsConfig} from './default-config';
 
 export function deepGet(object: any, path: string, throwOnMiss = false): any {
   return path
@@ -12,6 +13,10 @@ export function deepGet(object: any, path: string, throwOnMiss = false): any {
       }
       return partialState[pathSegment] || {};
     }, object);
+}
+
+export function getEffectiveConfig(userConfig: StoreFormsConfig) {
+  return {...defaultStoreFormsConfig, ...userConfig};
 }
 
 export function deepEquals(x, y) {

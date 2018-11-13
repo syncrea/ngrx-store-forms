@@ -6,12 +6,7 @@ import {Store} from '@ngrx/store';
 import {StoreFormsService} from './store-forms.service';
 import {StoreFormsConfig} from './store-forms.model';
 import {STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
-
-export const defaultStoreFormsConfig: StoreFormsConfig = {
-  bindingStrategy: 'ObserveStore',
-  debounce: 100,
-  errorMessages: {}
-};
+import {defaultStoreFormsConfig} from './default-config';
 
 @NgModule({
   imports: [
@@ -40,7 +35,7 @@ export class StoreFormsModule {
       ngModule: StoreFormsModule,
       providers: [{
         provide: STORE_FORMS_CONFIG,
-        useValue: {...defaultStoreFormsConfig, ...config}
+        useValue: config
       }, {
         provide: StoreFormsService,
         useClass: StoreFormsService,
@@ -54,7 +49,7 @@ export class StoreFormsModule {
       ngModule: StoreFormsModule,
       providers: [{
         provide: STORE_FORMS_CONFIG,
-        useValue: {...defaultStoreFormsConfig, ...config}
+        useValue: config
       }, {
         provide: StoreFormsService,
         useClass: StoreFormsService,
