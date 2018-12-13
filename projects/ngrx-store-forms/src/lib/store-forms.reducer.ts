@@ -1,6 +1,6 @@
-import { ActionReducer } from '@ngrx/store';
-import { FormGroupState } from './store-forms.model';
-import { UpdateStoreFormStateAction } from './store-forms.actions';
+import {ActionReducer} from '@ngrx/store';
+import {FormGroupState} from './store-forms.model';
+import {UpdateStoreFormStateAction} from './store-forms.actions';
 
 export function storeFormsReducer(state: any, action: UpdateStoreFormStateAction): any {
   switch (action.type) {

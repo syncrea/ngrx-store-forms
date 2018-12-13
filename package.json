@@ -1,13 +1,14 @@
 {
   "name": "ngrx-store-forms",
-  "version": "2.0.5",
+  "version": "3.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "build-lib": "ng build --project ngrx-store-forms"
   },
   "private": true,
   "dependencies": {

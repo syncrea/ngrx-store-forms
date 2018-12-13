@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {AbstractControl, FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {Store} from '@ngrx/store';
+import {select, Store} from '@ngrx/store';
 import {Observable, of} from 'rxjs';
 import {delay} from 'rxjs/operators';
 import {FormGroupState, UpdateStoreFormAction} from 'ngrx-store-forms';
@@ -25,7 +25,9 @@ export class SimpleFormContainerComponent {
       'name': ['', Validators.required],
       'userName': ['', Validators.required, (control: AbstractControl) => this.validateUserNameTaken(control)]
     });
-    this.formState = store.select((state: any) => state.simpleForm.form);
+    this.formState = store.pipe(
+      select((state: any) => state.simpleForm.form)
+    );
   }
 
   validateUserNameTaken(control: AbstractControl) {

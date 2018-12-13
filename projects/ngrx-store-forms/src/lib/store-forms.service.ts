@@ -1,11 +1,11 @@
-import {FormGroup} from '@angular/forms';
+import {AbstractControl, FormGroup} from '@angular/forms';
 import {Store} from '@ngrx/store';
 import {filter, map} from 'rxjs/operators';
 import {Inject, Injectable, Optional} from '@angular/core';
 import {noStoreError, noStoreFormBinding} from './errors';
 import {STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
-import {FormGroupState, StoreFormBinding, StoreFormsConfig} from './store-forms.model';
-import {deepEquals, deepGet, getEffectiveConfig, getErrors} from './helper';
+import {FormGroupState, StoreFormBinding, StoreFormsConfig, ResolvedErrorMessages} from './store-forms.model';
+import {deepEquals, deepGet, getEffectiveConfig, getFormState, resolveErrors} from './helper';
 import {UpdateStoreFormStateAction} from './store-forms.actions';
 import {merge} from 'rxjs';
 import {debounceTime} from 'rxjs/operators';
@@ -40,19 +40,17 @@ export class StoreFormsService {
 
     const formGroupSubscription = source.subscribe(() => {
       observeStore = false;
-      this.store.dispatch(new UpdateStoreFormStateAction(pathWithPrefix, {
-        value: {
-          ...formGroup.getRawValue()
-        },
-        untouched: formGroup.untouched,
-        touched: formGroup.touched,
-        pristine: formGroup.pristine,
-        dirty: formGroup.dirty,
-        valid: formGroup.valid,
-        invalid: formGroup.invalid,
-        pending: formGroup.pending,
-        errors: getErrors(formGroup, this.config.errorMessages, pathWithPrefix.split('.'))
-      }));
+      this.store.dispatch(new UpdateStoreFormStateAction(
+        pathWithPrefix,
+        <FormGroupState>getFormState(formGroup,
+          (control: AbstractControl, controlPath: string[]) =>
+            resolveErrors(
+              control.errors,
+              controlPath,
+              this.config.errorMessages,
+              pathWithPrefix.split('.')
+            )
+        )));
       observeStore = true;
     });
 

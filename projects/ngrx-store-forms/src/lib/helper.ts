@@ -1,5 +1,14 @@
-import {AbstractControl, FormArray, FormGroup} from '@angular/forms';
-import {StoreFormsConfig, ErrorMessages, ResolvedErrorMessages} from './store-forms.model';
+import {AbstractControl, FormGroup, ValidationErrors} from '@angular/forms';
+import {
+  ErrorMessages,
+  FormControlState,
+  FormGroupFields,
+  FormGroupState,
+  ErrorResolver,
+  FormGroupValues,
+  StoreFormsConfig,
+  FormControlStateBase
+} from './store-forms.model';
 import {defaultStoreFormsConfig} from './default-config';
 
 export function deepGet(object: any, path: string, throwOnMiss = false): any {
@@ -55,48 +64,78 @@ export function deepEquals(x, y) {
   }
 }
 
-export function getErrors(control: AbstractControl,
-                          errorMessages: ErrorMessages,
-                          pathPrefix: string[],
-                          resolvedErrorMessages: ResolvedErrorMessages = {},
-                          path: string[] = []): ResolvedErrorMessages {
-  if (control instanceof FormGroup) {
-    Object.keys(control.controls)
-      .map(key => ({name: key, control: control.controls[key]}))
-      .forEach(entry => getErrors(entry.control, errorMessages, pathPrefix, resolvedErrorMessages, [...path, entry.name]));
-  } else if (control instanceof FormArray) {
-    control.controls.forEach(
-      (subControl, index) => getErrors(subControl, errorMessages, pathPrefix, resolvedErrorMessages, [...path, `${index}`])
-    );
-  } else {
-    if (control.errors) {
-      const initialPath: string[] = [...path];
-      const lastPathElement: string = initialPath.pop();
-      const err: ResolvedErrorMessages = <any>initialPath
-        .reduce((errorsWalker, pathElement) => errorsWalker[pathElement] || (errorsWalker[pathElement] = {}), resolvedErrorMessages);
-      const normalizedPath = path.filter(pathElement => !(/^\d+$/g.test(pathElement)));
-      err[lastPathElement] = Object.keys(control.errors)
-        .reduce((messages, validatorName) => {
-          const wholePath = [...pathPrefix, ...normalizedPath];
-          let resolvedMessage = deepGet(errorMessages, [...wholePath, validatorName].join('.'));
-          if (typeof resolvedMessage === 'object') {
-            const parentSearchPath = [...wholePath];
-            while (typeof resolvedMessage === 'object' && parentSearchPath.length > 0) {
-              parentSearchPath.pop();
-              resolvedMessage = deepGet(errorMessages, [...parentSearchPath, validatorName].join('.'));
-            }
+function extractStateBase(control: AbstractControl): FormControlStateBase {
+  return {
+    dirty: control.dirty,
+    invalid: control.invalid,
+    pending: control.pending,
+    pristine: control.pristine,
+    touched: control.touched,
+    untouched: control.untouched,
+    valid: control.valid,
+    disabled: control.disabled,
+    enabled: control.enabled
+  };
+}
 
-            if (typeof resolvedMessage === 'object') {
-              resolvedMessage = validatorName;
-            }
-          }
-          if (messages.indexOf(resolvedMessage) === -1) {
-            messages.push(resolvedMessage);
-          }
-          return messages;
-        }, []);
-    }
+// TODO: Handle form arrays correctly
+export function getFormState<F>(control: AbstractControl,
+                         errorResolver: ErrorResolver,
+                         path: string[] = []): FormGroupState<F> | FormControlState {
+  if (control instanceof FormGroup) {
+    const fields: FormGroupFields<F> = Object.keys(control.controls)
+      .map(key => ({
+        name: key,
+        state: getFormState(control.controls[key], errorResolver, [...path, key])
+      }))
+      .reduce((reducedFields: FormGroupFields<F>, entry) => {
+        reducedFields[entry.name] = entry.state;
+        return reducedFields;
+      }, <FormGroupFields<F>>{});
+
+
+    return <FormGroupState<F>>{
+      ...extractStateBase(control),
+      value: <FormGroupValues<F>>control.value,
+      fields,
+      errors: errorResolver(control, path)
+    };
+  } else {
+    return <FormControlState>{
+      ...extractStateBase(control),
+      value: control.value,
+      errors: errorResolver(control, path)
+    };
+  }
+}
+
+export function resolveErrors(errors: ValidationErrors,
+                              path: string[],
+                              errorMessages: ErrorMessages = {},
+                              pathPrefix: string[] = []): string[] | null {
+  if (!errors) {
+    return null;
   }
 
-  return resolvedErrorMessages;
+  const normalizedPath = path.filter(pathElement => !(/^[\d\s]+$/g.test(pathElement)));
+  return Object.keys(errors)
+    .reduce((messages, validatorName) => {
+      const wholePath = [...pathPrefix, ...normalizedPath];
+      let resolvedMessage = deepGet(errorMessages, [...wholePath, validatorName].join('.'));
+      if (typeof resolvedMessage === 'object') {
+        const parentSearchPath = [...wholePath];
+        while (typeof resolvedMessage === 'object' && parentSearchPath.length > 0) {
+          parentSearchPath.pop();
+          resolvedMessage = deepGet(errorMessages, [...parentSearchPath, validatorName].join('.'));
+        }
+
+        if (typeof resolvedMessage === 'object') {
+          resolvedMessage = validatorName;
+        }
+      }
+      if (messages.indexOf(resolvedMessage) === -1) {
+        messages.push(resolvedMessage);
+      }
+      return messages;
+    }, []);
 }

@@ -2,6 +2,11 @@ import {Component, Input} from '@angular/core';
 import {FormGroupState} from 'ngrx-store-forms';
 import {FormGroup} from '@angular/forms';
 
+export interface SimpleForm {
+  name: string;
+  userName: string;
+}
+
 @Component({
   selector: 'app-simple-form',
   template: `
@@ -13,7 +18,7 @@ import {FormGroup} from '@angular/forms';
         <input formControlName="name" type="text">
       </label>
       <ng-container *ngIf="formState.dirty">
-        <div style="color: red" *ngFor="let error of formState.errors?.name">
+        <div style="color: red" *ngFor="let error of formState.fields.name.errors">
           {{error}}
         </div>
       </ng-container>
@@ -23,7 +28,7 @@ import {FormGroup} from '@angular/forms';
         <input formControlName="userName" type="text">
       </label>
       <ng-container *ngIf="formState.dirty">
-        <div style="color: red" *ngFor="let error of formState.errors?.userName">
+        <div style="color: red" *ngFor="let error of formState.fields.userName.errors">
           {{error}}
         </div>
       </ng-container>
@@ -37,5 +42,5 @@ import {FormGroup} from '@angular/forms';
 })
 export class SimpleFormComponent {
   @Input() formGroup: FormGroup;
-  @Input() formState: FormGroupState;
+  @Input() formState: FormGroupState<SimpleForm>;
 }
