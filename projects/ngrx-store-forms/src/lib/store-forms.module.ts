@@ -7,6 +7,7 @@ import {StoreFormsService} from './store-forms.service';
 import {StoreFormsConfig} from './store-forms.model';
 import {STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
 import {defaultStoreFormsConfig} from './default-config';
+import {TouchedUpdateDirective} from './touched-update.directive';
 
 @NgModule({
   imports: [
@@ -15,10 +16,12 @@ import {defaultStoreFormsConfig} from './default-config';
     ReactiveFormsModule
   ],
   declarations: [
-    BindingDirective
+    BindingDirective,
+    TouchedUpdateDirective
   ],
   exports: [
-    BindingDirective
+    BindingDirective,
+    TouchedUpdateDirective
   ],
   providers: [{
     provide: STORE_FORMS_CONFIG,

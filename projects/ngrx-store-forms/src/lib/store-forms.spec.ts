@@ -9,16 +9,57 @@ import {take} from 'rxjs/operators';
 import {EffectsModule} from '@ngrx/effects';
 import {StoreFormsEffects} from './store-forms.effects';
 import {UpdateStoreFormAction, UpdateStoreFormStateAction} from './store-forms.actions';
-import {By, ɵgetDOM as getDOM} from '@angular/platform-browser';
-
-export function dispatchEvent(element: any, eventType: any): void {
-  getDOM().dispatchEvent(element, getDOM().createEvent(eventType));
-}
+import {By} from '@angular/platform-browser';
 
 export interface SimpleForm {
   name: string;
   userName: string;
 }
+
+const initialSimpleFormState: FormGroupState<SimpleForm> = {
+  value: {
+    name: '',
+    userName: ''
+  },
+  dirty: false,
+  invalid: false,
+  pending: false,
+  pristine: true,
+  touched: false,
+  untouched: true,
+  valid: true,
+  disabled: false,
+  enabled: true,
+  errors: null,
+  fields: {
+    name: {
+      dirty: false,
+      invalid: false,
+      pending: false,
+      pristine: true,
+      touched: false,
+      untouched: true,
+      valid: true,
+      disabled: false,
+      enabled: true,
+      value: '',
+      errors: null
+    },
+    userName: {
+      dirty: false,
+      invalid: false,
+      pending: false,
+      pristine: true,
+      touched: false,
+      untouched: true,
+      valid: true,
+      disabled: false,
+      enabled: true,
+      value: '',
+      errors: null
+    }
+  }
+};
 
 describe('ngrx store forms', () => {
 
@@ -92,7 +133,7 @@ describe('ngrx store forms', () => {
           }),
           EffectsModule.forRoot([StoreFormsEffects]),
           StoreFormsModule.forRoot({
-            debounce: 100
+            debounce: 0
           })
         ],
         declarations: [
@@ -117,49 +158,23 @@ describe('ngrx store forms', () => {
       fixture.whenStable().then(() => {
         expect(store.dispatch)
           .toHaveBeenCalledWith(
-            new UpdateStoreFormStateAction('test.form', {
+            new UpdateStoreFormStateAction<SimpleForm>('test.form', {
+              ...initialSimpleFormState,
               value: {
                 name: 'Bob',
                 userName: ''
               },
               dirty: true,
-              invalid: false,
-              pending: false,
               pristine: false,
-              touched: false,
-              untouched: true,
-              valid: true,
-              disabled: false,
-              enabled: true,
               fields: {
+                ...initialSimpleFormState.fields,
                 name: {
+                  ...initialSimpleFormState.fields.name,
                   dirty: true,
-                  invalid: false,
-                  pending: false,
                   pristine: false,
-                  touched: false,
-                  untouched: true,
-                  valid: true,
-                  disabled: false,
-                  enabled: true,
-                  value: 'Bob',
-                  errors: null
-                },
-                userName: {
-                  dirty: false,
-                  invalid: false,
-                  pending: false,
-                  pristine: true,
-                  touched: false,
-                  untouched: true,
-                  valid: true,
-                  disabled: false,
-                  enabled: true,
-                  value: '',
-                  errors: null
+                  value: 'Bob'
                 }
-              },
-              errors: null
+              }
             }));
       });
     }));
@@ -178,48 +193,28 @@ describe('ngrx store forms', () => {
         expect(store.dispatch)
           .toHaveBeenCalledWith(
             new UpdateStoreFormStateAction<SimpleForm>('test.form', {
+              ...initialSimpleFormState,
               value: {
                 name: 'Bob',
                 userName: 'bob'
               },
               dirty: true,
-              invalid: false,
-              pending: false,
               pristine: false,
-              touched: false,
-              untouched: true,
-              valid: true,
-              disabled: false,
-              enabled: true,
               fields: {
+                ...initialSimpleFormState.fields,
                 name: {
+                  ...initialSimpleFormState.fields.name,
                   dirty: true,
-                  invalid: false,
-                  pending: false,
                   pristine: false,
-                  touched: false,
-                  untouched: true,
-                  valid: true,
-                  disabled: false,
-                  enabled: true,
-                  value: 'Bob',
-                  errors: null
+                  value: 'Bob'
                 },
                 userName: {
+                  ...initialSimpleFormState.fields.userName,
                   dirty: true,
-                  invalid: false,
-                  pending: false,
                   pristine: false,
-                  touched: false,
-                  untouched: true,
-                  valid: true,
-                  disabled: false,
-                  enabled: true,
-                  value: 'bob',
-                  errors: null
+                  value: 'bob'
                 }
-              },
-              errors: null
+              }
             })
           );
       });
@@ -288,53 +283,82 @@ describe('ngrx store forms', () => {
         expect(store.dispatch)
           .toHaveBeenCalledWith(
             new UpdateStoreFormStateAction<SimpleForm>('test.form', {
+              ...initialSimpleFormState,
               value: {
                 name: 'Bob',
                 userName: ''
               },
               dirty: true,
-              invalid: false,
-              pending: false,
               pristine: false,
               // Since we blurred away from the first input, touched should be true
               touched: true,
               untouched: false,
-              valid: true,
-              disabled: false,
-              enabled: true,
               fields: {
+                ...initialSimpleFormState.fields,
                 name: {
+                  ...initialSimpleFormState.fields.name,
                   dirty: true,
-                  invalid: false,
-                  pending: false,
                   pristine: false,
                   // Since we blurred away from the first input, touched should be true
                   touched: true,
                   untouched: false,
-                  valid: true,
-                  disabled: false,
-                  enabled: true,
-                  value: 'Bob',
-                  errors: null
-                },
-                userName: {
-                  dirty: false,
-                  invalid: false,
-                  pending: false,
-                  pristine: true,
-                  touched: false,
-                  untouched: true,
-                  valid: true,
-                  disabled: false,
-                  enabled: true,
-                  value: '',
-                  errors: null
+                  value: 'Bob'
                 }
-              },
-              errors: null
+              }
             })
           );
       });
+    }));
+
+    it('should handle programmatic value updates on form control', async(() => {
+      const formGroup: FormGroup = fixture.componentInstance.simpleTestFormGroup;
+      formGroup.get('name').setValue('Bob');
+
+      expect(store.dispatch)
+        .toHaveBeenCalledWith(
+          new UpdateStoreFormStateAction<SimpleForm>('test.form', {
+            ...initialSimpleFormState,
+            value: {
+              name: 'Bob',
+              userName: ''
+            },
+            fields: {
+              ...initialSimpleFormState.fields,
+              name: {
+                ...initialSimpleFormState.fields.name,
+                value: 'Bob'
+              }
+            }
+          })
+        );
+    }));
+
+    it('should handle programmatic status changes only', async(() => {
+      const formGroup: FormGroup = fixture.componentInstance.simpleTestFormGroup;
+      formGroup.get('name').markAsDirty();
+      formGroup.get('name').markAsTouched();
+      formGroup.updateValueAndValidity();
+
+      expect(store.dispatch)
+        .toHaveBeenCalledWith(
+          new UpdateStoreFormStateAction<SimpleForm>('test.form', {
+            ...initialSimpleFormState,
+            dirty: true,
+            pristine: false,
+            touched: true,
+            untouched: false,
+            fields: {
+              ...initialSimpleFormState.fields,
+              name: {
+                ...initialSimpleFormState.fields.name,
+                dirty: true,
+                pristine: false,
+                touched: true,
+                untouched: false
+              }
+            }
+          })
+        );
     }));
   });
 });

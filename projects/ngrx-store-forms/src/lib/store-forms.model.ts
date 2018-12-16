@@ -1,11 +1,12 @@
 import {AbstractControl, FormGroup} from '@angular/forms';
-import {Subscription} from 'rxjs';
+import {Subject, Subscription} from 'rxjs';
 
 export interface StoreFormBinding {
   path: string;
   formGroup: FormGroup;
   formGroupSubscription: Subscription;
-  storeSubscription?: Subscription | undefined;
+  storeSubscription?: Subscription;
+  stateUpdateTrigger: Subject<never>;
 }
 
 export interface ErrorMessages {

@@ -7,7 +7,7 @@ import {STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
 import {FormGroupState, StoreFormBinding, StoreFormsConfig, ResolvedErrorMessages} from './store-forms.model';
 import {deepEquals, deepGet, getEffectiveConfig, getFormState, resolveErrors} from './helper';
 import {UpdateStoreFormStateAction} from './store-forms.actions';
-import {merge} from 'rxjs';
+import {merge, Subject} from 'rxjs';
 import {debounceTime} from 'rxjs/operators';
 
 @Injectable()
@@ -31,33 +31,34 @@ export class StoreFormsService {
   }
 
   bind(path: string, formGroup: FormGroup) {
+    const stateUpdateTrigger = new Subject<never>();
+
     const pathWithPrefix = `${this.pathPrefix}${path}`;
     let observeStore = true;
-    let source = merge(formGroup.valueChanges, formGroup.statusChanges);
+    let source = merge(formGroup.valueChanges, formGroup.statusChanges, stateUpdateTrigger);
     if (this.config.debounce) {
       source = source.pipe(debounceTime(this.config.debounce));
     }
 
+    const errorResolver = (control: AbstractControl, controlPath: string[]) =>
+      resolveErrors(
+        control.errors,
+        controlPath,
+        this.config.errorMessages,
+        pathWithPrefix.split('.')
+      );
+
     const formGroupSubscription = source.subscribe(() => {
       observeStore = false;
-      this.store.dispatch(new UpdateStoreFormStateAction(
-        pathWithPrefix,
-        <FormGroupState>getFormState(formGroup,
-          (control: AbstractControl, controlPath: string[]) =>
-            resolveErrors(
-              control.errors,
-              controlPath,
-              this.config.errorMessages,
-              pathWithPrefix.split('.')
-            )
-        )));
+      this.store.dispatch(new UpdateStoreFormStateAction(pathWithPrefix, <FormGroupState>getFormState(formGroup, errorResolver)));
       observeStore = true;
     });
 
     this.bindings[pathWithPrefix] = {
       path: pathWithPrefix,
       formGroup,
-      formGroupSubscription
+      formGroupSubscription,
+      stateUpdateTrigger
     };
 
     if (this.config.bindingStrategy === 'ObserveStore') {
@@ -69,10 +70,7 @@ export class StoreFormsService {
             // Very simple dirty checking by comparing current values in
             // state to values in form group using deep equal to prevent
             // unwanted infinite loop
-            return formState &&
-              formState.value &&
-              Object.keys(formState.value).length !== 0 &&
-              !deepEquals(formState.value, formGroup.getRawValue());
+            return formState.value && Object.keys(formState.value).length && !deepEquals(formState, getFormState(formGroup, errorResolver));
           })
         )
         .subscribe((formState: FormGroupState) => {
@@ -99,12 +97,26 @@ export class StoreFormsService {
     this.bind(path, replace);
   }
 
-  getFormGroup(path: string) {
+  findBinding(path: string): StoreFormBinding | null {
     const pathWithPrefix = `${this.pathPrefix}${path}`;
-    if (this.bindings[pathWithPrefix]) {
-      return this.bindings[pathWithPrefix].formGroup;
+    return this.bindings[pathWithPrefix] || null;
+  }
+
+  getFormGroup(path: string) {
+    const binding = this.findBinding(path);
+    if (binding) {
+      return binding;
     } else {
-      return null;
+      noStoreFormBinding(`${this.pathPrefix}${path}`);
+    }
+  }
+
+  triggerUpdate(path: string) {
+    const binding = this.findBinding(path);
+    if (binding) {
+      binding.stateUpdateTrigger.next();
+    } else {
+      noStoreFormBinding(`${this.pathPrefix}${path}`);
     }
   }
 
