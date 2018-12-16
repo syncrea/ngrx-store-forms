@@ -27,15 +27,15 @@ export interface StoreFormsConfig {
 }
 
 export interface FormControlStateBase {
-  untouched: boolean;
-  touched: boolean;
-  pristine: boolean;
-  dirty: boolean;
-  valid: boolean;
-  invalid: boolean;
-  pending: boolean;
-  disabled: boolean;
-  enabled: boolean;
+  untouched?: boolean;
+  touched?: boolean;
+  pristine?: boolean;
+  dirty?: boolean;
+  valid?: boolean;
+  invalid?: boolean;
+  pending?: boolean;
+  disabled?: boolean;
+  enabled?: boolean;
 }
 
 export type FormGroupValues<F> = {
@@ -47,12 +47,12 @@ export type FormGroupFields<F> = {
 };
 
 export interface FormGroupState<F = any> extends FormControlStateBase {
-  value: FormGroupValues<F>;
+  value?: FormGroupValues<F>;
   errors?: string[];
-  fields: FormGroupFields<F>;
+  fields?: FormGroupFields<F>;
 }
 
 export interface FormControlState extends FormControlStateBase {
-  value: string;
+  value?: string;
   errors?: string[];
 }
