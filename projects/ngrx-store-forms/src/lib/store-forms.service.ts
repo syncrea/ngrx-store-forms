@@ -4,11 +4,11 @@ import {filter, map} from 'rxjs/operators';
 import {Inject, Injectable, Optional} from '@angular/core';
 import {noStoreError, noStoreFormBinding} from './errors';
 import {STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
-import {FormGroupState, StoreFormBinding, StoreFormsConfig, ResolvedErrorMessages} from './store-forms.model';
+import {FormGroupState, StoreFormBinding, StoreFormsConfig} from './store-forms.model';
 import {deepEquals, deepGet, getEffectiveConfig, getFormState, resolveErrors} from './helper';
 import {UpdateStoreFormStateAction} from './store-forms.actions';
 import {merge, Subject} from 'rxjs';
-import {debounceTime} from 'rxjs/operators';
+import {debounceTime, skip} from 'rxjs/operators';
 
 @Injectable()
 export class StoreFormsService {
@@ -64,6 +64,8 @@ export class StoreFormsService {
     if (this.config.bindingStrategy === 'ObserveStore') {
       this.bindings[pathWithPrefix].storeSubscription = this.store
         .pipe(
+          // We skip the initial value emitted by the store subject
+          skip(1),
           map((state) => deepGet(state, pathWithPrefix)),
           filter(() => observeStore),
           filter((formState: FormGroupState) => {

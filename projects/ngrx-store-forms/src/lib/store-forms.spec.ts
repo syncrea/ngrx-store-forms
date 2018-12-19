@@ -4,12 +4,15 @@ import {FormGroupState} from './store-forms.model';
 import {storeFormsMetaReducer} from './store-forms.reducer';
 import {StoreFormsModule} from './store-forms.module';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {ChangeDetectionStrategy, Component} from '@angular/core';
+import {ChangeDetectionStrategy, Component, Input} from '@angular/core';
 import {take} from 'rxjs/operators';
 import {EffectsModule} from '@ngrx/effects';
 import {StoreFormsEffects} from './store-forms.effects';
 import {UpdateStoreFormAction, UpdateStoreFormStateAction} from './store-forms.actions';
 import {By} from '@angular/platform-browser';
+import {StoreFormsService} from './store-forms.service';
+import Spy = jasmine.Spy;
+import {BindingDirective} from './binding.directive';
 
 export interface SimpleForm {
   name: string;
@@ -103,8 +106,7 @@ describe('ngrx store forms', () => {
           <input id="name" formControlName="name" type="text">
           <input id="userName" formControlName="userName" type="text">
         </form>
-      `,
-      changeDetection: ChangeDetectionStrategy.OnPush
+      `
     })
     class SimpleFormTestComponent {
       simpleTestFormGroup: FormGroup;
@@ -360,5 +362,149 @@ describe('ngrx store forms', () => {
           })
         );
     }));
+  });
+
+  describe('Binding directive', () => {
+    @Component({
+      selector: 'rxsf-simple-form-test',
+      template: `
+        <form *ngIf="showForm" [formGroup]="emptyGroup" [rxsfBinding]="binding" novalidate>
+        </form>
+      `
+    })
+    class TestComponent {
+      showForm = true;
+      binding = 'test.form';
+      emptyGroup: FormGroup;
+
+      constructor(private fb: FormBuilder) {
+        this.emptyGroup = fb.group({});
+      }
+    }
+
+    let fixture: ComponentFixture<TestComponent>;
+    let component: TestComponent;
+    let storeFormsService: StoreFormsService;
+    let bindSpy: Spy;
+    let unbindSpy: Spy;
+
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          FormsModule,
+          ReactiveFormsModule,
+          StoreModule.forRoot({}, {
+            metaReducers: [storeFormsMetaReducer]
+          }),
+          EffectsModule.forRoot([StoreFormsEffects]),
+          StoreFormsModule.forRoot({
+            debounce: 0
+          })
+        ],
+        declarations: [
+          TestComponent
+        ]
+      });
+
+      storeFormsService = TestBed.get(StoreFormsService);
+      bindSpy = spyOn(storeFormsService, 'bind').and.callThrough();
+      unbindSpy = spyOn(storeFormsService, 'unbind').and.callThrough();
+
+      fixture = TestBed.createComponent(TestComponent);
+      component = fixture.componentInstance;
+    });
+
+    it('should bind correctly in template', () => {
+      fixture.detectChanges();
+      expect(bindSpy.calls.count()).toBe(1);
+      expect(bindSpy.calls.mostRecent().args[0]).toBe('test.form');
+      expect(storeFormsService.findBinding('test.form')).toBeDefined();
+    });
+
+    it('should remove binding when destroyed', () => {
+      fixture.detectChanges();
+      const bindingDirective: BindingDirective = fixture.debugElement.query(By.directive(BindingDirective)).injector.get(BindingDirective);
+      const directiveDestroySpy = spyOn(bindingDirective, 'ngOnDestroy').and.callThrough();
+
+      expect(storeFormsService.findBinding('test.form')).toBeDefined();
+
+      component.showForm = false;
+      fixture.detectChanges();
+
+      expect(directiveDestroySpy).toHaveBeenCalled();
+      expect(storeFormsService.findBinding('test.form')).toBeNull();
+    });
+  });
+
+  describe('Dynamic form group', () => {
+    @Component({
+      selector: 'rxsf-simple-form-test',
+      template: `
+        <form *ngIf="showForm" [formGroup]="emptyGroup" [rxsfBinding]="binding" novalidate>
+        </form>
+      `
+    })
+    class TestComponent {
+      showForm = true;
+      binding = 'test.form';
+      emptyGroup: FormGroup;
+
+      constructor(private fb: FormBuilder) {
+        this.emptyGroup = fb.group({});
+      }
+    }
+
+    let fixture: ComponentFixture<TestComponent>;
+    let component: TestComponent;
+    let storeFormsService: StoreFormsService;
+    let bindSpy: Spy;
+    let unbindSpy: Spy;
+
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          FormsModule,
+          ReactiveFormsModule,
+          StoreModule.forRoot({}, {
+            metaReducers: [storeFormsMetaReducer]
+          }),
+          EffectsModule.forRoot([StoreFormsEffects]),
+          StoreFormsModule.forRoot({
+            debounce: 0
+          })
+        ],
+        declarations: [
+          TestComponent
+        ]
+      });
+
+      storeFormsService = TestBed.get(StoreFormsService);
+      bindSpy = spyOn(storeFormsService, 'bind').and.callThrough();
+      unbindSpy = spyOn(storeFormsService, 'unbind').and.callThrough();
+
+      fixture = TestBed.createComponent(TestComponent);
+      component = fixture.componentInstance;
+    });
+
+    it('should bind correctly in template', () => {
+      fixture.detectChanges();
+      expect(bindSpy.calls.count()).toBe(1);
+      expect(bindSpy.calls.mostRecent().args[0]).toBe('test.form');
+      expect(storeFormsService.findBinding('test.form')).toBeDefined();
+    });
+
+    it('should remove binding when destroyed', () => {
+      fixture.detectChanges();
+      const bindingDirective: BindingDirective = fixture.debugElement.query(By.directive(BindingDirective)).injector.get(BindingDirective);
+      const directiveDestroySpy = spyOn(bindingDirective, 'ngOnDestroy').and.callThrough();
+
+      expect(storeFormsService.findBinding('test.form')).toBeDefined();
+
+      component.showForm = false;
+      fixture.detectChanges();
+
+      expect(directiveDestroySpy).toHaveBeenCalled();
+      expect(storeFormsService.findBinding('test.form')).toBeNull();
+    });
   });
 });
