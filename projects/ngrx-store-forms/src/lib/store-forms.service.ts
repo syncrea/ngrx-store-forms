@@ -1,6 +1,6 @@
 import {AbstractControl, FormGroup} from '@angular/forms';
 import {Store} from '@ngrx/store';
-import {filter, map} from 'rxjs/operators';
+import {distinctUntilChanged, filter, map} from 'rxjs/operators';
 import {Inject, Injectable, Optional} from '@angular/core';
 import {noStoreError, noStoreFormBinding} from './errors';
 import {STORE_FORMS_CONFIG, STORE_FORMS_FEATURE} from './tokens';
@@ -32,14 +32,6 @@ export class StoreFormsService {
 
   bind(path: string, formGroup: FormGroup) {
     const stateUpdateTrigger = new Subject<never>();
-
-    const pathWithPrefix = `${this.pathPrefix}${path}`;
-    let observeStore = true;
-    let source = merge(formGroup.valueChanges, formGroup.statusChanges, stateUpdateTrigger);
-    if (this.config.debounce) {
-      source = source.pipe(debounceTime(this.config.debounce));
-    }
-
     const errorResolver = (control: AbstractControl, controlPath: string[]) =>
       resolveErrors(
         control.errors,
@@ -48,11 +40,24 @@ export class StoreFormsService {
         pathWithPrefix.split('.')
       );
 
-    const formGroupSubscription = source.subscribe(() => {
-      observeStore = false;
-      this.store.dispatch(new UpdateStoreFormStateAction(pathWithPrefix, <FormGroupState>getFormState(formGroup, errorResolver)));
-      observeStore = true;
-    });
+    const pathWithPrefix = `${this.pathPrefix}${path}`;
+    let observeStore = true;
+    let source = merge(
+      formGroup.valueChanges.pipe(map(() => getFormState(formGroup, errorResolver))),
+      formGroup.statusChanges.pipe(map(() => getFormState(formGroup, errorResolver))),
+      stateUpdateTrigger.pipe(map(() => getFormState(formGroup, errorResolver)))
+    );
+    if (this.config.debounce) {
+      source = source.pipe(debounceTime(this.config.debounce));
+    }
+
+    const formGroupSubscription = source
+      .pipe(distinctUntilChanged((a, b) => deepEquals(a, b)))
+      .subscribe(() => {
+        observeStore = false;
+        this.store.dispatch(new UpdateStoreFormStateAction(pathWithPrefix, <FormGroupState>getFormState(formGroup, errorResolver)));
+        observeStore = true;
+      });
 
     this.bindings[pathWithPrefix] = {
       path: pathWithPrefix,
